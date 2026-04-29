@@ -2611,11 +2611,13 @@ const GEMINI_URL = `/api/ask-ai`;
 // Replace your Gemini fetch with:
 async function callAI(prompt) {
   const res = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
-    });
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt })
+  });
   const data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || 'Server error ' + res.status);
+  if (!data.text) throw new Error('Empty response — check GEMINI_KEY is set in Vercel Environment Variables');
   return data.text;
 }
 let daReport = null; // will hold full report for download
