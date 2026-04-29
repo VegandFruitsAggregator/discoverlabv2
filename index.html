@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Discovery Lab — AI + Textbook Science Explorer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+
+:root{
+  --bg:#07080f; --card:#0d1120; --card2:#141830;
+  --border:rgba(255,255,255,.08); --text:#e8eaf0; --text2:#6b7299;
+  --phys:#00e5ff; --chem:#2dd4a0; --bio:#f472b6; --math:#a78bfa;
+  --gold:#f59e0b; --green:#10b981;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+@media(max-width:480px){body{font-size:13px}}
+@media(max-width:360px){body{font-size:12px}}
+
+.ambient{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 800px 600px at 15% 30%,rgba(0,229,255,.04) 0%,transparent 60%),
+             radial-gradient(ellipse 600px 500px at 85% 70%,rgba(45,212,160,.04) 0%,transparent 60%)}
+
+.screen{display:none;position:fixed;inset:0;z-index:1;align-items:center;justify-content:center;flex-direction:column}
+.screen.active{display:flex}
+#s-subjects,#s-experiments{overflow-y:auto;justify-content:flex-start;padding-top:0}
+#s-entry,#s-idcard{overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+/* ══ SCREEN 1: ENTRY ══ */
+#s-entry{gap:0}
+.entry-wrap{display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center;padding:20px;max-width:500px}
+.entry-logo{font-family:'Inter',sans-serif;font-size:.82rem;font-weight:900;color:var(--phys);letter-spacing:4px;text-shadow:0 0 24px rgba(0,229,255,.4)}
+.entry-tag{font-size:.65rem;color:var(--text2);font-family:'Space Mono',monospace;letter-spacing:2px;margin-top:2px}
+.entry-title{font-family:'Inter',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;line-height:1.1;
+  background:linear-gradient(135deg,#fff 20%,rgba(0,229,255,.7));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.entry-sub{font-size:.87rem;color:var(--text2);max-width:400px;line-height:1.7}
+.entry-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+.entry-input{background:var(--card);border:1px solid rgba(0,229,255,.3);border-radius:12px;
+  padding:13px 18px;color:var(--text);font-family:'Inter',sans-serif;font-size:.95rem;
+  outline:none;min-width:240px;transition:border-color .2s}
+.entry-input:focus{border-color:var(--phys);box-shadow:0 0 0 3px rgba(0,229,255,.1)}
+.entry-input::placeholder{color:var(--text2)}
+.btn-gen{background:linear-gradient(135deg,var(--phys),#7c3aed);color:#000;border:none;
+  border-radius:12px;padding:13px 24px;font-family:'Inter',sans-serif;font-weight:800;
+  font-size:.9rem;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-gen:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,229,255,.3)}
+.entry-warn{color:#ef4444;font-size:.78rem;display:none}
+
+/* ══ SCREEN 2: ID CARD ══ */
+#s-idcard{gap:0;background:rgba(7,8,15,.98)}
+.idcard-wrap{display:flex;flex-direction:column;align-items:center;gap:16px}
+.idcard-headline{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--phys);letter-spacing:3px;text-align:center;min-height:18px}
+
+.idcard{width:360px;background:linear-gradient(135deg,#0a1520,#0d1830 50%,#060f1a);
+  border-radius:18px;padding:20px 20px 16px;position:relative;overflow:hidden;
+  border:1px solid rgba(0,229,255,.2);
+  box-shadow:0 0 0 1px rgba(0,229,255,.06),0 20px 50px rgba(0,0,0,.6),0 0 60px rgba(0,229,255,.05)}
+.idcard::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,229,255,.04) 0%,transparent 50%,rgba(124,58,237,.03) 100%)}
+.holo{position:absolute;top:12px;right:12px;width:38px;height:38px;border-radius:50%;
+  background:conic-gradient(from 0deg,#00e5ff,#7c3aed,#f59e0b,#10b981,#00e5ff);
+  animation:spin 4s linear infinite;opacity:.65}
+@keyframes spin{to{transform:rotate(360deg)}}
+.holo::after{content:'';position:absolute;inset:4px;border-radius:50%;background:#0a1520}
+
+.idc-header{display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;position:relative}
+.idc-logo{font-family:'Inter',sans-serif;font-size:.68rem;color:var(--phys);letter-spacing:2px;font-weight:700;line-height:1.3}
+.idc-org{font-size:.56rem;color:var(--text2);font-family:'Space Mono',monospace}
+.idc-div{height:1px;background:linear-gradient(90deg,rgba(0,229,255,.4),transparent);margin-bottom:13px;position:relative}
+
+.idc-body{display:grid;grid-template-columns:62px 1fr;gap:12px;margin-bottom:13px;position:relative}
+.idc-photo{width:62px;height:62px;border-radius:10px;background:linear-gradient(135deg,#1a2240,#0d1830);
+  border:1px solid rgba(0,229,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0}
+.idc-info{display:flex;flex-direction:column;justify-content:center;gap:3px}
+.idc-lbl{font-size:.54rem;color:var(--text2);font-family:'Space Mono',monospace;letter-spacing:1px}
+.idc-name{font-family:'Inter',sans-serif;font-size:.9rem;font-weight:700;color:#fff;letter-spacing:1px;line-height:1.2}
+.idc-role{font-size:.65rem;color:var(--phys);font-family:'Space Mono',monospace;font-weight:700}
+
+.idc-fields{display:grid;grid-template-columns:1fr 1fr;gap:6px;position:relative;margin-bottom:13px}
+.idf{background:rgba(0,0,0,.3);border-radius:7px;padding:6px 9px;border:1px solid rgba(255,255,255,.04)}
+.idf-l{font-size:.52rem;color:var(--text2);font-family:'Space Mono',monospace;letter-spacing:1px;margin-bottom:1px}
+.idf-v{font-size:.72rem;font-weight:700;font-family:'Space Mono',monospace;color:var(--phys)}
+
+.idc-barcode{display:flex;align-items:flex-end;gap:1px;height:22px;opacity:.45;margin-bottom:2px}
+.idc-barcode span{background:rgba(0,229,255,.8);border-radius:1px}
+.idc-id{font-family:'Space Mono',monospace;font-size:.55rem;color:var(--text2);text-align:center;letter-spacing:2px}
+
+.gen-steps{display:flex;flex-direction:column;gap:5px;font-family:'Space Mono',monospace;font-size:.68rem;color:var(--text2);width:360px}
+.gen-step{display:flex;align-items:center;gap:8px;opacity:0;transition:opacity .3s;padding:4px 0}
+.gen-step.show{opacity:1}
+.gs-check{color:var(--green);font-weight:700;margin-left:auto}
+
+.access-granted{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.35);
+  border-radius:10px;padding:10px 20px;text-align:center;width:360px;
+  font-family:'Inter',sans-serif;font-size:.78rem;font-weight:700;color:var(--green);
+  letter-spacing:2px;display:none;animation:pglow .6s ease 3}
+@keyframes pglow{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.3)}50%{box-shadow:0 0 0 10px rgba(16,185,129,0)}}
+
+.btn-enter-lab{background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none;
+  border-radius:12px;padding:13px 32px;font-family:'Inter',sans-serif;font-weight:800;
+  font-size:.95rem;cursor:pointer;transition:all .2s;display:none;letter-spacing:.5px}
+.btn-enter-lab:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(16,185,129,.4)}
+
+/* ══ SCREEN 3: SUBJECTS ══ */
+#s-subjects{align-items:center}
+.subj-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:0;width:100%;max-width:900px;height:100%;overflow-y:auto}
+
+/* ── TOP NAV ── */
+.stb{display:flex;align-items:center;justify-content:space-between;width:100%;padding:20px 32px 16px;flex-shrink:0;border-bottom:1px solid var(--border)}
+.stb-logo{font-family:'Inter',sans-serif;font-size:.78rem;font-weight:800;color:var(--phys);letter-spacing:3px}
+.stb-right{display:flex;align-items:center;gap:12px}
+.stb-id{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text2);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:6px;padding:4px 10px;letter-spacing:1px}
+.stb-user{display:flex;align-items:center;gap:7px;font-size:.72rem;color:var(--text2);font-family:'Space Mono',monospace}
+.stb-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--phys),#7c3aed);display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
+
+/* ── WELCOME HERO ── */
+.subj-hero{padding:28px 32px 0;width:100%;flex-shrink:0}
+.subj-greet{font-size:.72rem;color:var(--text2);font-family:'Space Mono',monospace;letter-spacing:2px;margin-bottom:4px}
+.subj-username{font-size:clamp(1.4rem,3vw,2rem);font-weight:900;line-height:1.1;
+  background:linear-gradient(135deg,#fff 30%,rgba(0,229,255,.6));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+.subj-tagline{font-size:.78rem;color:var(--text2);line-height:1.6}
+
+/* ── SECTION LABELS ── */
+.section-label{font-size:.62rem;font-weight:700;color:var(--text2);letter-spacing:3px;font-family:'Space Mono',monospace;padding:24px 32px 10px;width:100%;flex-shrink:0}
+
+/* ── SUBJECT GRID ── */
+.subj-grid-wrap{padding:0 32px;width:100%;flex-shrink:0}
+.subj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+@media(max-width:650px){.subj-grid{grid-template-columns:1fr 1fr}}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:18px 14px;cursor:pointer;transition:all .25s;text-align:center;position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;inset:0;opacity:0;transition:.3s}
+.sc:hover::before{opacity:1}
+.sc:hover{transform:translateY(-4px)}
+.sc.locked{opacity:.38;cursor:not-allowed;pointer-events:none}
+.sc-ph{border-color:rgba(0,229,255,.15)}.sc-ph::before{background:linear-gradient(135deg,rgba(0,229,255,.07),transparent)}
+.sc-ph:hover{border-color:rgba(0,229,255,.4);box-shadow:0 8px 28px rgba(0,229,255,.1)}
+.sc-ch{border-color:rgba(45,212,160,.15)}.sc-ch::before{background:linear-gradient(135deg,rgba(45,212,160,.07),transparent)}
+.sc-ch:hover{border-color:rgba(45,212,160,.4);box-shadow:0 8px 28px rgba(45,212,160,.1)}
+.sc-bi{border-color:rgba(244,114,182,.15)}.sc-bi::before{background:linear-gradient(135deg,rgba(244,114,182,.07),transparent)}
+.sc-bi:hover{border-color:rgba(244,114,182,.4);box-shadow:0 8px 28px rgba(244,114,182,.1)}
+.sc-ma::before{background:linear-gradient(135deg,rgba(167,139,250,.05),transparent)}
+.sc-fi{border-color:rgba(251,191,36,.15)}.sc-fi::before{background:linear-gradient(135deg,rgba(251,191,36,.07),transparent)}
+.sc-fi .sc-name{color:#fbbf24}
+.sc-icon{font-size:2rem;margin-bottom:6px}
+.sc-name{font-family:'Inter',sans-serif;font-size:.72rem;font-weight:800;letter-spacing:2px;margin-bottom:4px}
+.sc-ph .sc-name{color:var(--phys)}.sc-ch .sc-name{color:var(--chem)}
+.sc-bi .sc-name{color:var(--bio)}.sc-ma .sc-name{color:var(--math)}
+.sc-desc{font-size:.63rem;color:var(--text2);line-height:1.45;margin-bottom:7px}
+.sc-badge{display:inline-block;font-size:.56rem;font-weight:700;border-radius:8px;padding:2px 8px}
+.badge-live{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.badge-soon{background:rgba(255,255,255,.04);color:var(--text2);border:1px solid var(--border)}
+
+/* ══ BADGE TRAIL ══ */
+.badge-trail-wrap{padding:0 32px 40px;width:100%;flex-shrink:0}
+.badge-empty{font-size:.72rem;color:var(--text2);font-family:'Space Mono',monospace;
+  background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.08);
+  border-radius:12px;padding:20px;text-align:center;letter-spacing:1px;opacity:.7}
+.badge-trail{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+
+/* individual badge */
+.bdg{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;
+  cursor:default;animation:bdg-pop .5s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes bdg-pop{from{opacity:0;transform:scale(.4) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+.bdg-coin{width:64px;height:64px;border-radius:50%;position:relative;
+  display:flex;align-items:center;justify-content:center;font-size:1.6rem;
+  animation:bdg-spin-in .6s ease both, bdg-glow 3s ease-in-out infinite}
+@keyframes bdg-spin-in{from{transform:rotateY(90deg) scale(.5)}to{transform:rotateY(0) scale(1)}}
+
+/* glow pulses by subject colour */
+.bdg-ph .bdg-coin{background:radial-gradient(circle at 35% 35%,rgba(0,229,255,.3),rgba(0,229,255,.08));
+  border:2px solid rgba(0,229,255,.5);box-shadow:0 0 0 0 rgba(0,229,255,.4)}
+@keyframes bdg-glow-ph{0%,100%{box-shadow:0 0 8px 2px rgba(0,229,255,.3),inset 0 0 12px rgba(0,229,255,.1)}
+  50%{box-shadow:0 0 22px 6px rgba(0,229,255,.5),inset 0 0 20px rgba(0,229,255,.2)}}
+.bdg-ph .bdg-coin{animation:bdg-spin-in .6s ease both,bdg-glow-ph 2.5s ease-in-out infinite}
+
+.bdg-ch .bdg-coin{background:radial-gradient(circle at 35% 35%,rgba(45,212,160,.3),rgba(45,212,160,.08));
+  border:2px solid rgba(45,212,160,.5)}
+@keyframes bdg-glow-ch{0%,100%{box-shadow:0 0 8px 2px rgba(45,212,160,.3),inset 0 0 12px rgba(45,212,160,.1)}
+  50%{box-shadow:0 0 22px 6px rgba(45,212,160,.5),inset 0 0 20px rgba(45,212,160,.2)}}
+.bdg-ch .bdg-coin{animation:bdg-spin-in .6s ease both,bdg-glow-ch 2.5s ease-in-out infinite}
+
+.bdg-bi .bdg-coin{background:radial-gradient(circle at 35% 35%,rgba(244,114,182,.3),rgba(244,114,182,.08));
+  border:2px solid rgba(244,114,182,.5)}
+@keyframes bdg-glow-bi{0%,100%{box-shadow:0 0 8px 2px rgba(244,114,182,.3),inset 0 0 12px rgba(244,114,182,.1)}
+  50%{box-shadow:0 0 22px 6px rgba(244,114,182,.5),inset 0 0 20px rgba(244,114,182,.2)}}
+.bdg-bi .bdg-coin{animation:bdg-spin-in .6s ease both,bdg-glow-bi 2.5s ease-in-out infinite}
+
+/* shimmer overlay on coin */
+.bdg-coin::after{content:'';position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 0deg,transparent 70%,rgba(255,255,255,.15) 80%,transparent 90%);
+  animation:bdg-shimmer 3s linear infinite}
+@keyframes bdg-shimmer{to{transform:rotate(360deg)}}
+
+/* star trail particles */
+.bdg-stars{position:absolute;top:-4px;left:50%;transform:translateX(-50%);pointer-events:none;width:80px;height:80px}
+.bdg-star{position:absolute;border-radius:50%;animation:star-float 2s ease-in-out infinite}
+@keyframes star-float{0%,100%{opacity:0;transform:translate(0,0) scale(0)}
+  30%{opacity:1}70%{opacity:.6}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(.3)}}
+
+.bdg-label{font-size:.55rem;font-weight:700;color:var(--text2);font-family:'Space Mono',monospace;
+  letter-spacing:.5px;text-align:center;max-width:72px;line-height:1.3}
+.bdg-exp{font-size:.5rem;color:var(--text2);opacity:.6;text-align:center;max-width:72px;font-family:'Space Mono',monospace}
+
+/* tooltip */
+.bdg:hover .bdg-tip{opacity:1;transform:translateY(-4px)}
+.bdg-tip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(0);
+  background:#1a2240;border:1px solid rgba(255,255,255,.12);border-radius:8px;
+  padding:8px 12px;font-size:.62rem;color:var(--text);font-family:'Space Mono',monospace;
+  white-space:nowrap;pointer-events:none;opacity:0;transition:all .2s;z-index:10;
+  box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.bdg-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:#1a2240}
+
+/* ══ SCREEN 4: EXPERIMENTS ══ */
+#s-experiments{align-items:center}
+.exps-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;padding:32px 20px;width:100%;max-width:660px}
+.back-btn{align-self:flex-start;background:none;border:1px solid var(--border);border-radius:8px;
+  padding:6px 14px;color:var(--text2);font-family:'Inter',sans-serif;font-size:.76rem;cursor:pointer;transition:all .2s}
+.back-btn:hover{border-color:rgba(255,255,255,.3);color:var(--text)}
+.exps-hdr{display:flex;align-items:center;gap:12px;width:100%}
+.exps-hdr-icon{font-size:2.2rem}
+.exps-hdr-name{font-family:'Inter',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:2px}
+.exps-hdr-desc{font-size:.75rem;color:var(--text2);margin-top:2px}
+.exps-list{display:flex;flex-direction:column;gap:10px;width:100%}
+.ei{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:16px 18px;display:flex;align-items:center;gap:14px;
+  cursor:pointer;transition:all .25s;text-decoration:none;color:inherit}
+.ei:hover{transform:translateX(4px)}
+.ei.locked{opacity:.4;cursor:not-allowed;pointer-events:none}
+.ei-ph:hover{border-color:rgba(0,229,255,.3);box-shadow:0 4px 18px rgba(0,229,255,.07)}
+.ei-ph .ei-name{color:var(--phys)}
+.ei-ch:hover{border-color:rgba(45,212,160,.3);box-shadow:0 4px 18px rgba(45,212,160,.07)}
+.ei-ch .ei-name{color:var(--chem)}
+.ei-bi:hover{border-color:rgba(244,114,182,.3);box-shadow:0 4px 18px rgba(244,114,182,.07)}
+.ei-bi .ei-name{color:var(--bio)}
+.ei-icon{font-size:1.7rem;flex-shrink:0}
+.ei-body{flex:1}
+.ei-name{font-family:'Inter',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:1px;margin-bottom:3px}
+.ei-desc{font-size:.71rem;color:var(--text2);line-height:1.45}
+.ei-tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.ei-tag{font-size:.58rem;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--text2)}
+.ei-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.ei-live{font-size:.62rem;font-weight:700;color:var(--green);background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:6px;padding:2px 7px;white-space:nowrap}
+.ei-soon{font-size:.62rem;color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:2px 7px;white-space:nowrap}
+.ei-arr{font-size:.95rem;color:var(--text2);transition:transform .2s}
+.ei:hover .ei-arr{transform:translateX(3px)}
+.ei-lock{font-size:1.1rem;opacity:.5}
+.ei-unlock{font-size:1.1rem;color:var(--green);filter:drop-shadow(0 0 4px rgba(16,185,129,.5))}
+.ei.locked{opacity:.45;cursor:not-allowed;pointer-events:none}
+.explore-more{text-align:center;font-size:.72rem;color:var(--text2);font-family:'Space Mono',monospace;
+  border-top:1px solid var(--border);padding-top:14px;margin-top:4px;letter-spacing:1px;opacity:.7}
+.explore-more span{color:var(--gold);}
+
+/* ══════════════════════════════════════
+   RESPONSIVE OVERHAUL — index.html
+══════════════════════════════════════ */
+
+/* ── Entry screen ── */
+@media(max-width:600px){
+  .entry-wrap{padding:28px 18px 20px;gap:16px}
+  .entry-title{font-size:clamp(1.4rem,6vw,2rem)}
+  .entry-sub{font-size:.8rem}
+  .entry-row{flex-direction:column;align-items:stretch;gap:8px}
+  .entry-input{min-width:unset;width:100%;font-size:.88rem}
+  .btn-gen{width:100%;padding:12px 16px;font-size:.85rem}
+}
+
+/* ── ID Card screen ── */
+@media(max-width:420px){
+  .idcard{width:min(320px,92vw);padding:16px 14px 14px}
+  .idcard-wrap{gap:12px;padding:16px 8px}
+  .gen-steps{width:min(320px,92vw)}
+  .access-granted{width:min(320px,92vw)}
+  .idc-name{font-size:.78rem}
+  .idf-v{font-size:.64rem}
+}
+
+/* ── Subjects screen topbar ── */
+@media(max-width:600px){
+  .stb{padding:14px 16px 12px}
+  .stb-logo{font-size:.7rem;letter-spacing:2px}
+  .stb-id{display:none}
+  .stb-user{font-size:.65rem;gap:5px}
+  .stb-av{width:26px;height:26px;font-size:.8rem}
+}
+
+/* ── Subjects hero ── */
+@media(max-width:600px){
+  .subj-hero{padding:18px 16px 0}
+  .subj-username{font-size:clamp(1.1rem,5vw,1.6rem)}
+  .subj-tagline{font-size:.72rem}
+  .subj-greet{font-size:.64rem}
+}
+
+/* ── Section labels ── */
+@media(max-width:600px){
+  .section-label{padding:16px 16px 8px;font-size:.58rem;letter-spacing:2px}
+}
+
+/* ── Subject grid ── */
+@media(max-width:600px){
+  .subj-grid-wrap{padding:0 16px}
+  .subj-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .sc{padding:14px 10px}
+  .sc-icon{font-size:1.6rem;margin-bottom:4px}
+  .sc-name{font-size:.64rem;letter-spacing:1.5px}
+  .sc-desc{font-size:.58rem}
+  .sc-badge{font-size:.52rem}
+}
+@media(max-width:360px){
+  .subj-grid{grid-template-columns:1fr 1fr;gap:6px}
+  .sc{padding:10px 7px}
+  .sc-icon{font-size:1.4rem}
+  .sc-name{font-size:.58rem;letter-spacing:1px}
+  .sc-desc{display:none}
+}
+
+/* ── Badge trail ── */
+@media(max-width:600px){
+  .badge-trail-wrap{padding:0 16px 32px}
+  .bdg-coin{width:54px;height:54px;font-size:1.35rem}
+  .bdg-label{font-size:.5rem;max-width:62px}
+  .bdg-exp{font-size:.45rem;max-width:62px}
+}
+
+/* ── Experiments list ── */
+@media(max-width:600px){
+  .exps-wrap{padding:20px 14px;gap:14px}
+  .exps-hdr-name{font-size:.95rem;letter-spacing:1px}
+  .exps-hdr-desc{font-size:.68rem}
+  .exps-hdr-icon{font-size:1.8rem}
+  .ei{padding:12px 13px;gap:10px}
+  .ei-icon{font-size:1.4rem}
+  .ei-name{font-size:.72rem;letter-spacing:.5px}
+  .ei-desc{font-size:.66rem}
+  .ei-tag{font-size:.54rem}
+  .ei-live,.ei-soon{font-size:.58rem;padding:2px 5px}
+  .back-btn{font-size:.7rem;padding:5px 10px}
+}
+@media(max-width:400px){
+  .ei-tags{display:none}
+  .ei-desc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+}
+
+/* ── Badge viewer modal ── */
+@media(max-width:480px){
+  #bdgModal > div{padding:20px 16px}
+  #bdgMCard{padding:14px}
+}
+
+/* ── Touch targets ── */
+@supports(padding:max(0px)){
+  .stb{
+    padding-left:max(16px,env(safe-area-inset-left));
+    padding-right:max(16px,env(safe-area-inset-right));
+  }
+  .subj-grid-wrap,.badge-trail-wrap,.exps-wrap{
+    padding-left:max(16px,env(safe-area-inset-left));
+    padding-right:max(16px,env(safe-area-inset-right));
+  }
+}
+
+/* ── Landscape phone ── */
+@media(max-height:480px) and (orientation:landscape){
+  .entry-wrap{gap:10px;padding:14px 18px}
+  .entry-title{font-size:1.4rem}
+  .entry-sub{display:none}
+  .idcard-wrap{gap:8px}
+  .idcard{transform:scale(.85);transform-origin:top center}
+  .gen-steps{font-size:.6rem}
+}
+
+/* ── Subj wrap scrollable on mobile ── */
+@media(max-width:700px){
+  .subj-wrap{padding-bottom:env(safe-area-inset-bottom,16px)}
+  .exps-wrap{padding-bottom:env(safe-area-inset-bottom,20px)}
+}
+</style>
+</head>
+<body>
+<div class="ambient"></div>
+
+<!-- SCREEN 1: NAME ENTRY -->
+<div class="screen active" id="s-entry">
+  <div class="entry-wrap">
+    <div>
+      <div class="entry-logo">⚗ DISCOVERY LAB</div>
+      <div class="entry-tag">AI + TEXTBOOK · SCIENCE EXPLORER</div>
+    </div>
+    <h1 class="entry-title">Enter the Lab.<br>Do Real Science.</h1>
+    <p class="entry-sub">Collect data, train an AI, compare it with your textbook — and understand the difference.</p>
+    <div class="entry-row">
+      <input class="entry-input" id="nameInput" type="text" placeholder="Your name, Scientist…" maxlength="30" autocomplete="off">
+      <button class="btn-gen" onclick="generateID()">Generate ID Card →</button>
+    </div>
+    <div class="entry-warn" id="nameWarn">Please enter your name to continue.</div>
+  </div>
+</div>
+
+<!-- SCREEN 2: ID CARD GENERATION -->
+<div class="screen" id="s-idcard">
+  <div class="idcard-wrap">
+    <div class="idcard-headline" id="cardHL">⚙ GENERATING LAB ACCESS ID…</div>
+
+    <div class="idcard">
+      <div class="holo"></div>
+      <div class="idc-header">
+        <div>
+          <div class="idc-logo">⚗ DISCOVERY LAB</div>
+          <div class="idc-org">AUTHORISED ACCESS CREDENTIAL</div>
+        </div>
+      </div>
+      <div class="idc-div"></div>
+      <div class="idc-body">
+        <div class="idc-photo" id="cardPhoto">🔬</div>
+        <div class="idc-info">
+          <div class="idc-lbl">SCIENTIST NAME</div>
+          <div class="idc-name" id="cardName">—</div>
+          <div class="idc-role" id="cardRole">INITIALISING…</div>
+        </div>
+      </div>
+      <div class="idc-fields">
+        <div class="idf"><div class="idf-l">CLEARANCE</div><div class="idf-v" id="cardClear">—</div></div>
+        <div class="idf"><div class="idf-l">ACCESS LEVEL</div><div class="idf-v" id="cardLevel">—</div></div>
+        <div class="idf"><div class="idf-l">ISSUED</div><div class="idf-v" id="cardDate">—</div></div>
+        <div class="idf"><div class="idf-l">VALID FOR</div><div class="idf-v" id="cardValid">—</div></div>
+      </div>
+      <div class="idc-barcode" id="cardBC"></div>
+      <div class="idc-id" id="cardID">DL-XXXXXXXX</div>
+    </div>
+
+    <div class="gen-steps">
+      <div class="gen-step" id="gs1"><span>🔍</span><span>Verifying identity…</span><span class="gs-check" id="gc1"></span></div>
+      <div class="gen-step" id="gs2"><span>🧬</span><span>Assigning scientist profile…</span><span class="gs-check" id="gc2"></span></div>
+      <div class="gen-step" id="gs3"><span>🔐</span><span>Encrypting credentials…</span><span class="gs-check" id="gc3"></span></div>
+      <div class="gen-step" id="gs4"><span>🏛️</span><span>Granting lab access…</span><span class="gs-check" id="gc4"></span></div>
+    </div>
+
+    <div class="access-granted" id="accessGranted">✅ ACCESS GRANTED — WELCOME, <span id="agName"></span></div>
+    <button class="btn-enter-lab" id="enterLabBtn" onclick="enterLab()">Enter the Lab →</button>
+  </div>
+</div>
+
+<!-- SCREEN 3: SUBJECT SELECTION -->
+<div class="screen" id="s-subjects">
+  <div class="subj-wrap" id="subjWrap">
+    <!-- TOP NAV -->
+    <div class="stb">
+      <div class="stb-logo">⚗ DISCOVERY LAB</div>
+      <div class="stb-right">
+        <div class="stb-id" id="topID">DL-XXXXXXXX</div>
+        <div class="stb-user"><div class="stb-av" id="topAvatar">🔬</div><span id="topName">Scientist</span></div>
+      </div>
+    </div>
+
+    <!-- WELCOME HERO -->
+    <div class="subj-hero">
+      <div class="subj-greet">WELCOME BACK, SCIENTIST</div>
+      <div class="subj-username" id="heroName">—</div>
+      <div class="subj-tagline">Pick a subject and run your next experiment. Your badges are waiting below.</div>
+    </div>
+
+    <!-- SUBJECTS -->
+    <div class="section-label">◈ CHOOSE YOUR SUBJECT</div>
+    <div class="subj-grid-wrap">
+      <div class="subj-grid">
+        <div class="sc sc-ph" onclick="showExps('physics')">
+          <div class="sc-icon">⚛️</div>
+          <div class="sc-name">PHYSICS</div>
+          <div class="sc-desc">Motion, forces, energy &amp; oscillations</div>
+          <span class="sc-badge badge-live">9 Live · 10 Exps</span>
+        </div>
+        <div class="sc sc-ch" onclick="showExps('chemistry')">
+          <div class="sc-icon">🧪</div>
+          <div class="sc-name">CHEMISTRY</div>
+          <div class="sc-desc">Reactions, separation &amp; processes</div>
+          <span class="sc-badge badge-live">9 Live · 10 Exps</span>
+        </div>
+        <div class="sc sc-bi" onclick="showExps('biology')">
+          <div class="sc-icon">🧬</div>
+          <div class="sc-name">BIOLOGY</div>
+          <div class="sc-desc">Life processes &amp; living systems</div>
+          <span class="sc-badge badge-live">9 Live · 10 Exps</span>
+        </div>
+        <div class="sc sc-ma locked">
+          <div class="sc-icon">📐</div>
+          <div class="sc-name">MATHS</div>
+          <div class="sc-desc">Statistics, probability &amp; modelling</div>
+          <span class="sc-badge badge-soon">Coming Soon</span>
+        </div>
+        <div class="sc sc-fi locked">
+          <div class="sc-icon">💹</div>
+          <div class="sc-name">FINANCE</div>
+          <div class="sc-desc">Markets, interest &amp; economic models</div>
+          <span class="sc-badge badge-soon">Coming Soon</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BADGE TRAIL -->
+    <div class="section-label">🏅 YOUR ACHIEVEMENT TRAIL</div>
+    <div class="badge-trail-wrap">
+      <div id="badgeTrail" class="badge-trail"></div>
+      <div id="badgeEmpty" class="badge-empty" style="display:none">
+        🔬 No badges yet — complete a live experiment to earn your first one!
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 4: EXPERIMENT LIST -->
+<div class="screen" id="s-experiments">
+  <div class="exps-wrap">
+    <button class="back-btn" onclick="backToSubjects()">← Back to Subjects</button>
+    <div class="exps-hdr" id="expsHdr"></div>
+    <div class="exps-list" id="expsList"></div>
+  </div>
+</div>
+
+<script>
+let scientistName = '';
+let labID = '';
+
+/* ══ BADGE SYSTEM ══════════════════════════════════
+   Experiment pages should call this URL to award a badge:
+   ../../index.html?goto=subjects&name=Nidhi&badge=PENDULUM+CLOCK&icon=🕰️&subject=physics
+   OR post a message: window.opener.awardBadge({name,icon,subject,desc})
+═══════════════════════════════════════════════════ */
+
+// subject → CSS class + color
+const SUBJ_META = {
+  physics:  {cls:'bdg-ph', color:'#00e5ff'},
+  chemistry:{cls:'bdg-ch', color:'#2dd4a0'},
+  biology:  {cls:'bdg-bi', color:'#f472b6'},
+};
+
+function getBadgeKey(name){ return 'dlbadges_' + name.toLowerCase().replace(/\s+/g,'_'); }
+
+function loadBadges(){
+  if(!scientistName) return [];
+  try{ return JSON.parse(localStorage.getItem(getBadgeKey(scientistName)) || '[]'); }
+  catch(e){ return []; }
+}
+
+function saveBadge(badge){
+  const badges = loadBadges();
+  // no duplicates
+  if(badges.find(b=>b.name===badge.name && b.subject===badge.subject)) return false;
+  badges.push({...badge, earned: new Date().toISOString()});
+  localStorage.setItem(getBadgeKey(scientistName), JSON.stringify(badges));
+  return true;
+}
+
+function awardBadge(badge){
+  // badge = {name, icon, subject, desc}
+  const added = saveBadge(badge);
+  if(added) renderBadgeTrail();
+}
+window.awardBadge = awardBadge; // expose for experiment pages
+
+function renderBadgeTrail(){
+  const badges = loadBadges();
+  const trail = document.getElementById('badgeTrail');
+  const empty = document.getElementById('badgeEmpty');
+  trail.innerHTML = '';
+  if(badges.length === 0){
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  badges.forEach((b, i) => {
+    const meta = SUBJ_META[b.subject] || {cls:'bdg-ph',color:'#00e5ff'};
+    const div = document.createElement('div');
+    div.className = `bdg ${meta.cls}`;
+div.style.animationDelay = (i * 80) + 'ms';
+div.onclick = () => openBadgeViewer(b);
+    // star particles
+    const starColors = {'bdg-ph':'#00e5ff','bdg-ch':'#2dd4a0','bdg-bi':'#f472b6'};
+    const sc = starColors[meta.cls] || '#00e5ff';
+    let stars = '';
+    const angles = [0,60,120,180,240,300];
+    angles.forEach((a,j)=>{
+      const r = 28 + Math.random()*10;
+      const tx = Math.round(Math.cos(a*Math.PI/180)*r)+'px';
+      const ty = Math.round(Math.sin(a*Math.PI/180)*r - 10)+'px';
+      const size = 2 + Math.random()*3;
+      stars += `<div class="bdg-star" style="
+        width:${size}px;height:${size}px;
+        background:${sc};
+        left:${28+Math.round(Math.cos(a*Math.PI/180)*18)}px;
+        top:${28+Math.round(Math.sin(a*Math.PI/180)*18)}px;
+        --tx:${tx};--ty:${ty};
+        animation-delay:${j*0.15+i*0.05}s;
+        animation-duration:${1.8+Math.random()}s;
+        box-shadow:0 0 4px ${sc}
+      "></div>`;
+    });
+
+    const dateStr = b.earned ? new Date(b.earned).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '';
+    div.innerHTML = `
+      <div class="bdg-stars">${stars}</div>
+      <div class="bdg-coin">${b.icon||'🏅'}</div>
+      <div class="bdg-label">${b.name}</div>
+      <div class="bdg-exp">${b.subject?.toUpperCase()||''}</div>
+      <div class="bdg-tip">🏅 ${b.name}<br><span style="color:var(--text2);font-size:.55rem">${b.desc||''}<br>${dateStr}</span></div>
+    `;
+    trail.appendChild(div);
+  });
+}
+
+const SUBJECTS = {
+  physics:{
+    icon:'⚛️', name:'PHYSICS', color:'var(--phys)',
+    desc:'Motion, forces, energy and oscillations',
+    exps:[
+      { icon:'⚽', name:'Football Trajectory', cls:'ei-ph',
+        desc:'Simulate projectile motion of a football. AI vs trajectory equation. Real-world: free kick in football.',
+        tags:['Range (m)','Max Height (m)','Projectile Motion','Curve Fitting AI'],
+        live:true, url:'experiments/phy/projectile.html' },
+      { icon:'🕰️', name:'Pendulum Clock', cls:'ei-ph',
+        desc:'Study how the time period of a pendulum varies with its length. AI vs T = 2π√(L/g). Real-world: designing pendulum clocks for accurate timekeeping.',
+        tags:['Time Period (s)','String Length (m)','Curve Fitting AI','Class 6–10'],
+        live:true, url:'experiments/phy/pendulum.html' },
+      { icon:'⚡', name:'Smart Electric Circuits', cls:'ei-ph',
+        desc:'Study current flow by building series and parallel circuits. AI vs V = IR (Ohm\'s Law). Real-world: house wiring systems.',
+        tags:['Current (A)','Power (W)','Ohm\'s Law','Linear Regression AI'],
+        live:true, url:'experiments/phy/eleccircuit.html' },
+      { icon:'🚢', name:'Float & Sink', cls:'ei-ph',
+        desc:'Observe buoyancy and floating/sinking behaviour. AI vs Archimedes Principle. Real-world: ship design and flotation.',
+        tags:['Density (g/cm³)','Buoyant Force','Archimedes Principle','Float/Sink AI'],
+        live:true, url:'experiments/phy/floatsink.html' },
+      { icon:'🧲', name:'Magnetism', cls:'ei-ph',
+        desc:'Explore magnetic field patterns and pole interactions. AI vs field mapping. Real-world: MRI machines and electric motors.',
+        tags:['Field Strength (T)','Pole Distance (cm)','Magnetism','Field Mapping AI'],
+        live:true, url:'experiments/phy/magnetism.html' },
+      { icon:'🚗', name:'Motion Analysis', cls:'ei-ph',
+        desc:'Study velocity and acceleration from distance-time data. AI vs kinematics equations. Real-world: car speed monitoring.',
+        tags:['Velocity (m/s)','Acceleration (m/s²)','Distance (m)','Kinematics AI'],
+        live:true, url:'experiments/phy/motion.html' },
+      { icon:'🪞', name:'Road Safety Mirrors', cls:'ei-ph',
+        desc:'Study reflection of light from mirrors. AI vs angle of reflection = angle of incidence. Real-world: traffic mirrors at turns.',
+        tags:['Angle of Incidence (°)','Angle of Reflection (°)','Reflection','Identity Relation'],
+        live:true, url:'experiments/phy/reflection.html' },
+      { icon:'👓', name:'Refraction & Lenses', cls:'ei-ph',
+        desc:'Observe light bending through different media. AI vs Snell\'s Law. Real-world: eye testing and spectacles.',
+        tags:['Angle of Refraction (°)','Refractive Index','Snell\'s Law','Optics AI'],
+        live:true, url:'experiments/phy/refraction.html' },
+      { icon:'🎧', name:'Wave Behaviour', cls:'ei-ph',
+        desc:'Combine waves to observe interference and superposition. AI vs wave equation. Real-world: noise-canceling headphones.',
+        tags:['Resultant Amplitude','Frequency (Hz)','Interference','Wave Superposition'],
+        live:true, url:'experiments/phy/wave.html' }
+    ]
+  },
+  chemistry:{
+    icon:'🧪', name:'CHEMISTRY', color:'var(--chem)',
+    desc:'Reactions, separation and chemical processes',
+    exps:[
+      { icon:'🧫', name:'Acid-Base Reactions', cls:'ei-ch',
+        desc:'Neutralize acids using bases and observe pH changes via titration. AI vs titration curve. Real-world: antacid tablets and stomach acid.',
+        tags:['pH Level','Acid-Base','Titration Curve AI','Class 8–12'],
+        live:true, url:'experiments/chem/acidbase.html' },
+      { icon:'🌈', name:'Chromatography', cls:'ei-ch',
+        desc:'Separate mixtures using paper chromatography. AI vs Rf value prediction. Real-world: detecting food colouring and dyes.',
+        tags:['Rf Value','Solvent Front (cm)','Chromatography','Separation AI'],
+        live:true, url:'experiments/chem/chromatography.html' },
+      { icon:'🔥', name:'Combustion Analysis', cls:'ei-ch',
+        desc:'Study fuel combustion and energy release. AI vs calorimetry model. Real-world: engine efficiency and fuel ratings.',
+        tags:['Energy Released (kJ)','Fuel Mass (g)','Combustion','Calorimetry AI'],
+        live:true, url:'experiments/chem/combustion.html' },
+      { icon:'🌉', name:'Rust Formation (Corrosion)', cls:'ei-ch',
+        desc:'Observe oxidation of iron under different conditions. AI vs rate vs environment. Real-world: rusting of bridges.',
+        tags:['Rust Rate','Moisture Level','Corrosion','Rate vs Environment AI'],
+        live:true, url:'experiments/chem/corrosion.html' },
+      { icon:'💎', name:'Crystallisation', cls:'ei-ch',
+        desc:'Grow crystals from a supersaturated solution. AI vs crystal growth model. Real-world: salt and sugar refining.',
+        tags:['Crystal Mass (g)','Temperature (°C)','Crystallisation','Growth Model AI'],
+        live:true, url:'experiments/chem/crystallisation.html' },
+      { icon:'⚡', name:'Water Electrolysis', cls:'ei-ch',
+        desc:'Split water into gases using electricity. AI vs gas ratio prediction. Real-world: hydrogen fuel production.',
+        tags:['Gas Volume (mL)','Voltage (V)','Electrolysis','Ratio Prediction AI'],
+        live:true, url:'experiments/chem/electrolysis.html' },
+      { icon:'🍳', name:'Reaction Rate (Cooking)', cls:'ei-ch',
+        desc:'Study the effect of temperature on reaction speed. AI vs rate vs temperature. Real-world: pressure cooking.',
+        tags:['Reaction Speed','Temperature (°C)','Chemical Kinetics','Rate Curve AI'],
+        live:true, url:'experiments/chem/reactionrate.html' },
+      { icon:'🍭', name:'Sugar Solubility', cls:'ei-ch',
+        desc:'Dissolve solute at different temperatures and observe solubility changes. AI vs curve fitting. Real-world: candy making.',
+        tags:['Solubility (g/100mL)','Temperature (°C)','Solutions','Curve Fitting AI'],
+        live:true, url:'experiments/chem/solubility.html' },
+      { icon:'🧊', name:'States of Matter', cls:'ei-ch',
+        desc:'Observe phase transitions and heating/cooling curves. AI vs thermodynamic model. Real-world: freeze-drying food.',
+        tags:['Temperature (°C)','Heat Added (J)','Phase Transitions','Thermodynamics AI'],
+        live:true, url:'experiments/chem/states.html' }
+    ]
+  },
+  biology:{
+    icon:'🧬', name:'BIOLOGY', color:'var(--bio)',
+    desc:'Life processes and living systems',
+    exps:[
+      { icon:'🍞', name:'Yeast Respiration', cls:'ei-bi',
+        desc:'Observe CO₂ production when yeast breaks down sugar under different conditions. AI vs rate vs substrate concentration. Real-world: bread dough rising during baking.',
+        tags:['CO₂ Production Rate (mL/hr)','Sugar Concentration (g/L)','Rate Curve AI','Class 8–12'],
+        live:true, url:'experiments/bio/yeast.html' },
+      { icon:'🧫', name:'Cell Division', cls:'ei-bi',
+        desc:'Simulate mitosis and observe cell multiplication. AI vs growth model. Real-world: cancer cell growth and wound healing.',
+        tags:['Cell Count','Division Time (min)','Mitosis Stages','Growth Model AI'],
+        live:true, url:'experiments/bio/cell_division.html' },
+      { icon:'❤️', name:'Blood Circulation', cls:'ei-bi',
+        desc:'Simulate heart rate and blood flow through the body. AI vs cardiac output model. Real-world: exercise physiology and heart health.',
+        tags:['Heart Rate (bpm)','Blood Flow (L/min)','Cardiac Output','Circulation AI'],
+        live:true, url:'experiments/bio/circulation.html' },
+      { icon:'💧', name:'Osmosis & Diffusion', cls:'ei-bi',
+        desc:'Simulate water and solute movement across membranes. AI vs gradient-based flow. Real-world: why plants wilt in salty soil.',
+        tags:['Cell Volume Change (%)','Solute Conc. (M)','Osmosis','Diffusion AI'],
+        live:true, url:'experiments/bio/diffusion.html' },
+      { icon:'🧬', name:'Genetic Inheritance', cls:'ei-bi',
+        desc:'Simulate inheritance of traits from parent genotypes. AI vs probability distribution. Real-world: why children resemble their parents.',
+        tags:['Trait Probability (%)','Parent Genotype','Mendelian Genetics','Probability AI'],
+        live:true, url:'experiments/bio/genetics.html' },
+      { icon:'🛡️', name:'Immunity & Vaccines', cls:'ei-bi',
+        desc:'Model how the immune system responds to pathogens and vaccines. AI vs immunity curve. Real-world: vaccine development and herd immunity.',
+        tags:['Antibody Level','Pathogen Load','Immune Response','Immunity AI'],
+        live:true, url:'experiments/bio/immunity.html' },
+      { icon:'🫘', name:'Kidney Filtration', cls:'ei-bi',
+        desc:'Simulate nephron filtration and urine formation. AI vs filtration model. Real-world: kidney disease and dialysis machines.',
+        tags:['Filtration Rate (mL/min)','Urine Output (mL)','Nephron','Filtration AI'],
+        live:true, url:'experiments/bio/kidney.html' },
+      { icon:'🧠', name:'Learning Neuron', cls:'ei-bi',
+        desc:'Simulate how a neuron learns and strengthens connections over time. AI vs Hebbian learning. Real-world: how studying forms memory.',
+        tags:['Synapse Strength','Learning Rate','Neural Plasticity','Hebbian AI'],
+        live:true, url:'experiments/bio/learningneuron.html' }
+    ]
+  }
+};
+
+/* ── SCREEN 1 → 2 ─────────────────────────────── */
+document.getElementById('nameInput').addEventListener('keydown', e => { if(e.key==='Enter') generateID(); });
+
+function generateID() {
+  const n = document.getElementById('nameInput').value.trim();
+  if (!n) { document.getElementById('nameWarn').style.display='block'; return; }
+  scientistName = n;
+  document.getElementById('nameWarn').style.display='none';
+  document.getElementById('s-entry').classList.remove('active');
+  document.getElementById('s-idcard').classList.add('active');
+
+  // Fill card
+  document.getElementById('cardName').textContent = n.toUpperCase();
+  document.getElementById('cardDate').textContent = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'});
+  document.getElementById('cardValid').textContent = 'ALL SUBJECTS';
+  document.getElementById('cardID').textContent = 'DL-' + Math.random().toString(36).substr(2,8).toUpperCase();
+  labID = document.getElementById('cardID').textContent;
+  document.getElementById('agName').textContent = n.toUpperCase();
+
+  // Barcode
+  const bc = document.getElementById('cardBC');
+  bc.innerHTML = '';
+  for(let i=0;i<50;i++){
+    const s=document.createElement('span');
+    s.style.height=(8+Math.floor(Math.random()*14))+'px';
+    s.style.width=(Math.random()>.65?3:2)+'px';
+    bc.appendChild(s);
+  }
+
+  // Animate steps
+  const steps=[
+    {id:'gs1',ck:'gc1',d:200, fn:()=>{ document.getElementById('cardRole').textContent='SCIENTIST · LEVEL 1'; }},
+    {id:'gs2',ck:'gc2',d:800, fn:()=>{ document.getElementById('cardClear').textContent='FULL ACCESS'; document.getElementById('cardPhoto').textContent=pickEmoji(); }},
+    {id:'gs3',ck:'gc3',d:1500,fn:()=>{ document.getElementById('cardLevel').textContent='LAB-01'; }},
+    {id:'gs4',ck:'gc4',d:2200,fn:()=>{ document.getElementById('cardHL').textContent='✅ ID VERIFIED — CREDENTIALS ACTIVE'; }},
+  ];
+  steps.forEach(({id,ck,d,fn})=>{
+    setTimeout(()=>{
+      document.getElementById(id).classList.add('show');
+      setTimeout(()=>{ document.getElementById(ck).textContent='✓'; fn(); },480);
+    },d);
+  });
+  setTimeout(()=>{
+    document.getElementById('accessGranted').style.display='block';
+    setTimeout(()=>{ document.getElementById('enterLabBtn').style.display='inline-block'; },600);
+  },3100);
+}
+
+function pickEmoji(){
+  return ['🔬','🧪','⚗️','🔭','🧬','⚛️','🌡️','💡','🧲','📡'][Math.floor(Math.random()*10)];
+}
+
+/* ── SCREEN 2 → 3 ─────────────────────────────── */
+function enterLab(){
+  document.getElementById('s-idcard').classList.remove('active');
+  document.getElementById('s-subjects').classList.add('active');
+  document.getElementById('topName').textContent = scientistName;
+  document.getElementById('heroName').textContent = scientistName;
+  document.getElementById('topID').textContent = labID || document.getElementById('cardID').textContent;
+  document.getElementById('topAvatar').textContent = document.getElementById('cardPhoto').textContent || '🔬';
+  renderBadgeTrail();
+}
+
+/* ── SCREEN 3 → 4 ─────────────────────────────── */
+function showExps(key){
+  const s = SUBJECTS[key];
+  document.getElementById('expsHdr').innerHTML =
+    `<div class="exps-hdr-icon">${s.icon}</div>
+     <div><div class="exps-hdr-name" style="color:${s.color}">${s.name}</div>
+     <div class="exps-hdr-desc">${s.desc}</div></div>`;
+
+  const list = document.getElementById('expsList');
+  list.innerHTML='';
+  s.exps.forEach(exp=>{
+    const el = exp.live ? document.createElement('a') : document.createElement('div');
+    el.className = `ei ${exp.cls}${exp.live?'':' locked'}`;
+    if(exp.live) el.href = exp.url + '?name=' + encodeURIComponent(scientistName);
+    el.innerHTML =
+      `<div class="ei-icon">${exp.icon}</div>
+       <div class="ei-body">
+         <div class="ei-name">${exp.name}</div>
+         <div class="ei-desc">${exp.desc}</div>
+         <div class="ei-tags">${exp.tags.map(t=>`<span class="ei-tag">${t}</span>`).join('')}</div>
+       </div>
+       <div class="ei-right">
+         ${exp.live
+           ? `<span class="ei-live">● LIVE</span><span class="ei-unlock" title="Unlocked">🔓</span>`
+           : `<span class="ei-soon">Coming Soon</span><span class="ei-lock" title="Locked">🔒</span>`
+         }
+       </div>`;
+    list.appendChild(el);
+  });
+
+  // "Explore more to unlock" footer
+  const footer = document.createElement('div');
+  footer.className = 'explore-more';
+  footer.innerHTML = '🔒 <span>Explore more to unlock</span> — complete live experiments to reveal new ones';
+  list.appendChild(footer);
+
+  document.getElementById('s-subjects').classList.remove('active');
+  document.getElementById('s-experiments').classList.add('active');
+}
+
+/* ── SCREEN 4 → 3 ─────────────────────────────── */
+function backToSubjects(){
+  document.getElementById('s-experiments').classList.remove('active');
+  document.getElementById('s-subjects').classList.add('active');
+}
+
+/* ── DEEP-LINK: ?goto=subjects OR ?subject= ────── */
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const gotoSubjects = params.get('goto') === 'subjects' || params.has('subject') || params.has('badge');
+  if(gotoSubjects){
+    const name = params.get('name') || '';
+    scientistName = name;
+    // Populate UI
+    if(name){
+      document.getElementById('topName').textContent = name;
+      document.getElementById('heroName').textContent = name;
+    }
+    document.getElementById('s-entry').classList.remove('active');
+    document.getElementById('s-subjects').classList.add('active');
+
+    // Award badge if passed
+    const badgeName = params.get('badge');
+    if(badgeName && name){
+      saveBadge({
+        name: decodeURIComponent(badgeName),
+        icon: decodeURIComponent(params.get('icon')||'🏅'),
+        subject: params.get('subject')||'physics',
+        desc: decodeURIComponent(params.get('desc')||'Experiment completed')
+      });
+    }
+    renderBadgeTrail();
+
+    // Auto-open subject panel if ?subject= provided (and no badge, else stay on subjects)
+    const subj = params.get('subject');
+    if(subj && SUBJECTS[subj] && !badgeName) showExps(subj);
+  }
+})();
+/* ── BADGE VIEWER MODAL ─────────────────────────── */
+(function(){
+  const overlay = document.createElement('div');
+  overlay.id = 'bdgModal';
+  overlay.style.cssText = `display:none;position:fixed;inset:0;z-index:999;background:rgba(7,8,15,.88);
+    backdrop-filter:blur(12px);align-items:center;justify-content:center`;
+  overlay.innerHTML = `
+    <div style="width:min(480px,94vw);background:#0d1120;border-radius:18px;
+      border:1px solid rgba(255,255,255,.1);padding:28px 24px;position:relative;
+      box-shadow:0 24px 60px rgba(0,0,0,.7);animation:bdg-pop .4s cubic-bezier(.34,1.56,.64,1)">
+      <button onclick="closeBadgeViewer()" style="position:absolute;top:14px;right:16px;
+        background:none;border:none;color:#6b7299;font-size:1.2rem;cursor:pointer;line-height:1">✕</button>
+      <div style="text-align:center;font-size:.65rem;font-weight:700;letter-spacing:3px;
+        color:#f59e0b;margin-bottom:18px">🥉 ACHIEVEMENT UNLOCKED</div>
+
+      <div id="bdgMCard" style="background:linear-gradient(135deg,#0a1520,#0d1830 50%,#060f1a);
+        border-radius:14px;padding:20px;border:1px solid rgba(255,255,255,.08)">
+        <!-- filled by openBadgeViewer -->
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:18px">
+        <button id="bdgMClose" onclick="closeBadgeViewer()" style="flex:1;padding:12px;
+          background:none;border:1px solid rgba(255,255,255,.1);border-radius:10px;
+          color:#6b7299;font-family:'Inter',sans-serif;font-weight:600;font-size:.85rem;cursor:pointer">
+          Close
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+})();
+
+function openBadgeViewer(b){
+  const meta = SUBJ_META[b.subject] || {cls:'bdg-ph', color:'#00e5ff'};
+  const pct = b.desc ? (b.desc.match(/(\d+)% quiz/)||[])[1] : null;
+  const r2  = b.desc ? (b.desc.match(/R²=([^\s,]+)/)||[])[1] : null;
+  const rank = b.desc ? b.desc.split(' · ')[0] : '—';
+  const date = b.earned ? new Date(b.earned).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '';
+  const subjLabel = (b.subject||'').toUpperCase();
+  // Parse extra fields saved by exp pages
+  const modelStr = b.desc ? (b.desc.match(/model:([^|]+)/)||[])[1] : null;
+  const ptStr    = b.desc ? (b.desc.match(/pts:(\d+)/)||[])[1] : null;
+  const stgStr   = b.desc ? (b.desc.match(/stg:([^|]+)/)||[])[1] : '10/10';
+  const card = document.getElementById('bdgMCard');
+  card.style.borderColor = meta.color + '33';
+  card.innerHTML = `
+    <div style="font-size:.52rem;font-weight:700;letter-spacing:2px;color:${meta.color};
+      text-align:right;margin-bottom:8px;opacity:.6">DISCOVERYLAB · ${subjLabel}</div>
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,.12);
+      border:1px solid rgba(245,158,11,.35);border-radius:20px;padding:4px 12px;
+      font-size:.62rem;font-weight:700;color:#f59e0b;margin-bottom:12px">
+      🥉 VERIFIED ACHIEVEMENT
+    </div>
+    <div style="display:flex;align-items:center;gap:11px;margin-bottom:13px;padding-bottom:11px;
+      border-bottom:1px solid rgba(255,255,255,.06)">
+      <div style="width:42px;height:42px;border-radius:11px;
+        background:linear-gradient(135deg,${meta.color},#7c3aed);
+        display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">
+        ${b.icon||'🏅'}
+      </div>
+      <div>
+        <div style="font-weight:800;font-size:.98rem;color:#fff">${scientistName||'Scientist'}</div>
+        <div style="font-size:.6rem;color:${meta.color};font-weight:700;letter-spacing:1px;margin-top:2px;font-family:'Space Mono',monospace">
+          ${b.name.toUpperCase()} · COMPLETE
+        </div>
+      </div>
+    </div>
+    <div style="background:linear-gradient(90deg,rgba(0,229,255,.07),rgba(124,58,237,.06));
+      border:1px solid rgba(0,229,255,.15);border-radius:9px;padding:9px 12px;margin-bottom:10px">
+      <div style="font-size:.5rem;font-weight:700;letter-spacing:.12em;color:#6b7299;
+        font-family:'Space Mono',monospace;margin-bottom:3px;text-transform:uppercase">Title Earned</div>
+      <div style="font-size:.9rem;font-weight:700;color:${meta.color}">${rank}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px">
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:9px 11px">
+        <div style="font-size:.5rem;font-weight:700;letter-spacing:.1em;color:#6b7299;font-family:'Space Mono',monospace;margin-bottom:3px;text-transform:uppercase">Quiz Score</div>
+        <div style="font-size:.9rem;font-weight:700;color:#f59e0b">${pct!=null ? pct+'/'+5 : '—'}</div>
+        <div style="font-size:.54rem;color:#6b7299;margin-top:1px">${pct!=null ? pct+'% correct' : ''}</div>
+      </div>
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:9px 11px">
+        <div style="font-size:.5rem;font-weight:700;letter-spacing:.1em;color:#6b7299;font-family:'Space Mono',monospace;margin-bottom:3px;text-transform:uppercase">AI Model</div>
+        <div style="font-size:.78rem;font-weight:700;color:${meta.color};line-height:1.2">${modelStr||'Polynomial Regression'}</div>
+        <div style="font-size:.54rem;color:#6b7299;margin-top:1px">R² = ${r2||'—'}</div>
+      </div>
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:9px 11px">
+        <div style="font-size:.5rem;font-weight:700;letter-spacing:.1em;color:#6b7299;font-family:'Space Mono',monospace;margin-bottom:3px;text-transform:uppercase">Data Points</div>
+        <div style="font-size:.9rem;font-weight:700;color:#f59e0b">${ptStr||'1500'}</div>
+        <div style="font-size:.54rem;color:#6b7299;margin-top:1px">0 by you</div>
+      </div>
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:9px 11px">
+        <div style="font-size:.5rem;font-weight:700;letter-spacing:.1em;color:#6b7299;font-family:'Space Mono',monospace;margin-bottom:3px;text-transform:uppercase">Stages Done</div>
+        <div style="font-size:.9rem;font-weight:700;color:#f59e0b">${stgStr||'10/10'}</div>
+        <div style="font-size:.54rem;color:#6b7299;margin-top:1px">All complete</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:.54rem;color:#6b7299;
+      font-family:'Space Mono',monospace;padding-top:9px;border-top:1px solid rgba(255,255,255,.05)">
+      <span>${date}</span><span style="color:${meta.color};font-weight:700;opacity:.7">DISCOVERYLAB</span>
+    </div>`;
+  const modal = document.getElementById('bdgModal');
+  modal.style.display = 'flex';
+}
+
+function closeBadgeViewer(){
+  document.getElementById('bdgModal').style.display = 'none';
+}
+</script>
+</body>
+</html>

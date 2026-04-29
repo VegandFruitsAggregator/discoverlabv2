@@ -1,0 +1,2920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>DiscoveryLab — Projectile Motion</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+:root{
+  --bg:#07090f;--surface:#0e1219;--surface2:#141b26;--surface3:#1b2536;
+  --teal:#00e096;--teal-d:rgba(0,224,150,.1);--teal-b:rgba(0,224,150,.2);
+  --purple:#7c5fff;--amber:#f5a623;--red:#f05454;--green:#36f0a0;--blue:#4ab5ff;
+  --text:#dce8f6;--text2:#7a8fa8;--text3:#48576e;
+  --bdr:rgba(255,255,255,.055);--bdr2:rgba(255,255,255,.09);
+  --r:12px;--rs:8px;
+  --f:'Inter',sans-serif;--m:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:var(--f);color:var(--text);display:flex;flex-direction:column;height:100dvh;min-height:-webkit-fill-available;font-size:14px}
+::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px}
+
+/* — topbar — */
+.topbar{height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:rgba(7,9,15,.96);border-bottom:1px solid var(--bdr);flex-shrink:0;z-index:100;backdrop-filter:blur(20px)}
+.tl-logo{display:flex;align-items:center;gap:7px;font-weight:800;font-size:.88rem;color:var(--text)}
+.tl-logo-mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--teal),var(--purple));display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.stage-pills{display:flex;gap:3px;align-items:center;overflow-x:auto;scrollbar-width:none;max-width:58vw}
+.stage-pills::-webkit-scrollbar{display:none}
+.sp{height:22px;padding:0 8px;border-radius:20px;border:1.5px solid var(--bdr2);display:flex;align-items:center;gap:4px;font-size:.63rem;color:var(--text3);transition:.2s;cursor:pointer;font-weight:600;white-space:nowrap;flex-shrink:0}
+.sp-num{width:13px;height:13px;border-radius:50%;background:var(--bdr2);display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:700}
+.sp.done{border-color:var(--green);color:var(--green)}.sp.done .sp-num{background:var(--green);color:#07090f}
+.sp.active{border-color:var(--teal);color:var(--teal);background:var(--teal-d)}.sp.active .sp-num{background:var(--teal);color:#07090f}
+.sp.locked{opacity:.2;pointer-events:none}
+@media(max-width:600px){.sp-lbl{display:none}}
+.tl-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.tl-name{font-size:.7rem;color:var(--text2);max-width:75px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tl-home{background:transparent;border:1px solid var(--bdr2);color:var(--text2);font-size:.68rem;padding:4px 10px;border-radius:var(--rs);cursor:pointer;font-family:var(--f);transition:.2s}
+.tl-home:hover{border-color:var(--teal);color:var(--teal)}
+
+/* — screens / panels — */
+.screen{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0}
+.screen.active{display:flex}
+.stage-panel{display:none;flex:1;flex-direction:column;min-height:0;overflow:hidden}
+.stage-panel.active{display:flex}
+/* S8 & S9 need their body to scroll on mobile */
+@media(max-width:680px){
+  #stage-8,#stage-9{overflow:hidden}
+  #stage-8 .s8-body,#stage-9 .s9-body{
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    flex:1;
+    height:100%;
+  }
+}
+
+/* — bottom nav — */
+.bnav{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:rgba(7,9,15,.96);border-top:1px solid var(--bdr);flex-shrink:0}
+.bnav-c{font-size:.68rem;color:var(--text3);text-align:center;line-height:1.4}
+.bnav-c strong{color:var(--text2);display:block;font-weight:700;font-size:.74rem}
+.bb{display:flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--bdr2);color:var(--text2);font-size:.71rem;padding:6px 12px;border-radius:var(--rs);cursor:pointer;transition:.2s;font-family:var(--f);font-weight:500}
+.bb:hover:not(:disabled){border-color:var(--teal);color:var(--teal)}
+.bb:disabled{opacity:.28;cursor:not-allowed}
+.bb.p{background:var(--teal);color:#07090f;border:none;font-weight:700}
+.bb.p:hover:not(:disabled){opacity:.88}
+.btn{padding:8px 18px;border-radius:var(--rs);font-family:var(--f);font-weight:600;font-size:.78rem;cursor:pointer;transition:all .18s;border:none}
+.btn-t{background:var(--teal);color:#07090f}.btn-t:hover:not(:disabled){opacity:.88}.btn-t:disabled{opacity:.3;cursor:not-allowed}
+.btn-g{background:transparent;border:1px solid var(--bdr2);color:var(--text2)}.btn-g:hover{border-color:var(--teal);color:var(--teal)}
+.btn-p{background:var(--purple);color:#fff}.btn-p:hover:not(:disabled){opacity:.88}
+.btn-a{background:var(--amber);color:#07090f}.btn-a:hover{opacity:.88}
+.fade{animation:fi .3s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.flip-ov{position:fixed;inset:0;z-index:400;pointer-events:none;opacity:0;transition:opacity .15s;background:var(--bg)}
+.flip-ov.show{opacity:.95}
+.param-svg-icon svg{width:100%;height:100%;display:block}
+.param-svg-icon{display:inline-flex;align-items:center;flex-shrink:0}
+.tag{display:inline-block;background:var(--surface2);border:1px solid var(--bdr);color:var(--text3);border-radius:20px;padding:2px 8px;font-size:.62rem;font-weight:500}
+
+/* ══════ S11 DESCRIPTIVE ANALYSIS ══════ */
+.da-card{background:var(--surface);border:1px solid var(--bdr2);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
+.da-qnum{font-size:.62rem;color:var(--teal);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.da-qtxt{font-size:.82rem;color:var(--text);line-height:1.55;font-weight:500}
+.da-input-wrap{position:relative;display:flex;align-items:flex-start;gap:8px}
+.da-ta{flex:1;background:var(--surface2);border:1px solid var(--bdr2);border-radius:var(--rs);padding:10px 12px;color:var(--text);font-family:var(--f);font-size:.78rem;resize:vertical;line-height:1.5;min-height:80px;transition:border-color .2s}
+.da-ta:focus{outline:none;border-color:var(--teal)}
+.da-mic{width:36px;height:36px;border-radius:50%;background:var(--surface3);border:1px solid var(--bdr2);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;margin-top:2px}
+.da-mic:hover{border-color:var(--teal);background:var(--teal-d)}
+.da-mic.listening{border-color:var(--red);background:rgba(240,84,84,.15);animation:pulse-mic 1s infinite}
+@keyframes pulse-mic{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.da-mic-status{font-size:.65rem;color:var(--text3);min-height:14px}
+.da-mascot-bubble{display:flex;align-items:flex-start;gap:12px;background:var(--surface2);border:1px solid var(--bdr2);border-radius:var(--r);padding:14px}
+.da-mascot-face{font-size:2rem;flex-shrink:0;animation:mascot-bounce .5s ease}
+@keyframes mascot-bounce{0%{transform:scale(.7) rotate(-10deg)}60%{transform:scale(1.15) rotate(4deg)}100%{transform:scale(1) rotate(0)}}
+.da-mascot-name{font-size:.62rem;font-weight:700;color:var(--teal);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+.da-mascot-msg{font-size:.8rem;color:var(--text);line-height:1.55}
+.da-spinner{width:32px;height:32px;border:3px solid var(--surface3);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:480px){.da-mascot-bubble{flex-direction:column;align-items:center;text-align:center}.da-mascot-face{font-size:2.5rem}}
+
+/* ══════ REPORT MODAL ══════ */
+.rpt-ov{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:600;display:flex;flex-direction:column;backdrop-filter:blur(6px);overflow:hidden}
+.rpt-ov.hidden{display:none}
+.rpt-topbar{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:rgba(7,9,15,.97);border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.rpt-title{font-size:.88rem;font-weight:700;color:#dce8f6}
+.rpt-actions{display:flex;gap:8px}
+.rpt-body{flex:1;overflow-y:auto;padding:20px 16px 40px;-webkit-overflow-scrolling:touch}
+.rpt-inner{max-width:680px;margin:0 auto}
+.rpt-card{background:#0e1219;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:18px;margin-bottom:14px}
+.rpt-label{font-size:.62rem;font-weight:700;color:#00e096;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.rpt-score-big{font-size:2.8rem;font-weight:900;color:#f5a623;line-height:1;font-family:'JetBrains Mono',monospace}
+.rpt-level{display:inline-block;background:#7c5fff;color:#fff;border-radius:20px;padding:4px 14px;font-size:.78rem;font-weight:700}
+.rpt-chip{display:inline-block;background:#141b26;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:3px 10px;font-size:.7rem;margin:3px 2px;color:#4ab5ff}
+.rpt-ans{background:#141b26;border-radius:8px;padding:10px 13px;font-size:.78rem;color:#7a8fa8;font-style:italic;margin-top:8px;line-height:1.6;border-left:3px solid rgba(0,224,150,.3)}
+.rpt-body-txt{font-size:.83rem;color:#dce8f6;line-height:1.72;margin-top:10px}
+.rpt-enc{border-color:rgba(0,224,150,.2)}
+.rpt-enc .rpt-label{color:#36f0a0}
+.rpt-footer{text-align:center;font-size:.66rem;color:#48576e;margin-top:8px;padding-bottom:10px}
+@media(max-width:480px){.rpt-score-big{font-size:2.2rem}.rpt-card{padding:14px}}
+
+/* ══════ S1 REAL WORLD ══════ */
+.s1-body{flex:1;display:flex;align-items:center;justify-content:center;gap:32px;padding:18px 28px;overflow:hidden}
+.s1-scene-wrap{width:220px;height:280px;background:var(--surface);border:1px solid var(--bdr2);border-radius:16px;overflow:hidden;position:relative;flex-shrink:0}
+@media(max-width:680px){.s1-body{flex-direction:column;gap:14px;overflow-y:auto;padding:14px}.s1-scene-wrap{width:100%;height:200px}}
+#cvScene{position:absolute;inset:0;width:100%;height:100%}
+.s1-content{max-width:320px;display:flex;flex-direction:column;gap:12px}
+.s1-ey{font-size:.62rem;font-weight:700;letter-spacing:.1em;color:var(--teal);text-transform:uppercase}
+.s1-h{font-size:1.15rem;font-weight:800;line-height:1.3}
+.s1-p{font-size:.8rem;color:var(--text2);line-height:1.75}
+.s1-facts{display:flex;flex-direction:column;gap:6px}
+.s1-fact{display:flex;align-items:flex-start;gap:8px;background:var(--surface);border:1px solid var(--bdr);border-radius:var(--rs);padding:8px 11px;font-size:.74rem;color:var(--text2);line-height:1.55}
+.s1-fact strong{color:var(--text)}
+
+/* ══════ S2 HISTORY ══════ */
+.s2-body{flex:1;display:flex;flex-direction:column;align-items:center;padding:18px 18px 0;overflow:hidden;gap:12px}
+.s2-h2{font-size:1.1rem;font-weight:800;margin-bottom:3px;text-align:center}
+.s2-sub{font-size:.76rem;color:var(--text2);text-align:center}
+.s2-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;flex:1;align-items:center}
+.hc{width:210px;height:252px;perspective:1200px;cursor:pointer;flex-shrink:0}
+@media(max-width:680px){.hc{width:190px;height:230px}}
+.hc-inner{width:100%;height:100%;transform-style:preserve-3d;transition:transform .65s cubic-bezier(.4,0,.2,1);position:relative}
+.hc.flipped .hc-inner{transform:rotateY(180deg)}
+.hc-f,.hc-b{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;border:1px solid var(--bdr2);background:var(--surface);padding:15px;display:flex;flex-direction:column;overflow:hidden}
+.hc-b{transform:rotateY(180deg);background:var(--surface2);border-color:var(--teal-b)}
+.hc.read .hc-f{border-color:var(--green)}
+.hc-yr{font-size:.78rem;color:var(--text3);margin-bottom:10px;font-family:var(--m)}
+.hc-ico{width:40px;height:40px;border-radius:10px;background:var(--teal-d);border:1px solid var(--teal-b);display:flex;align-items:center;justify-content:center;font-size:1.15rem;margin-bottom:10px}
+.hc-name{font-size:.94rem;font-weight:700;margin-bottom:4px}
+.hc-desc{font-size:.78rem;color:var(--text2);line-height:1.55;flex:1}
+.hc-cta{font-size:.75rem;color:var(--teal);display:flex;align-items:center;gap:3px;margin-top:auto;padding-top:7px;font-weight:600}
+.hc-itag{display:inline-flex;align-items:center;gap:3px;background:var(--teal-d);border:1px solid var(--teal-b);color:var(--teal);border-radius:20px;padding:2px 8px;font-size:.6rem;font-weight:700;margin-bottom:8px}
+.hc-btitle{font-size:.9rem;font-weight:700;margin-bottom:4px}
+.hc-bbody{font-size:.77rem;color:var(--text2);line-height:1.58;flex:1}
+.hc-bpers{display:flex;align-items:center;gap:6px;margin-top:auto;padding-top:7px;border-top:1px solid var(--bdr)}
+.hc-av{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--teal));display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;flex-shrink:0}
+.hc-ck{position:absolute;top:9px;right:9px;width:17px;height:17px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:.52rem;color:#07090f;font-weight:700;opacity:0;transition:.25s}
+.hc.read .hc-ck{opacity:1}
+.s2-prog-area{width:100%;max-width:440px;padding-bottom:10px;flex-shrink:0}
+.s2-prog-bar{height:3px;background:var(--surface3);border-radius:2px;overflow:hidden}
+.s2-prog-fill{height:100%;background:var(--teal);border-radius:2px;transition:width .4s}
+.s2-fb{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--bdr);border-radius:var(--rs);padding:7px 13px;font-size:.72rem;color:var(--text2);opacity:0;transition:.3s;margin-top:6px}
+.s2-fb.show{opacity:1}
+
+/* ══════ S3 THEORY ══════ */
+.s3-body{flex:1;display:grid;grid-template-columns:40% 60%;min-height:0;overflow:hidden}
+@media(max-width:680px){.s3-body{grid-template-columns:1fr;overflow-y:auto}}
+.s3-vis{border-right:1px solid var(--bdr);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px 14px;background:var(--surface);overflow-y:auto}
+@media(max-width:680px){.s3-vis{border-right:none;border-bottom:1px solid var(--bdr)}}
+.s3-cv-box{background:var(--bg);border:1px solid var(--bdr2);border-radius:12px;overflow:hidden;width:100%;flex:1;min-height:0;max-height:calc(100% - 160px)}
+.s3-cv-box canvas{width:100%;height:100%;display:block}
+.s3-stats{display:flex;gap:6px;width:100%;flex-shrink:0}
+.s3-st{background:var(--bg);border:1px solid var(--bdr2);border-radius:var(--rs);padding:8px 10px;text-align:center;flex:1}
+.s3-st .v{font-family:var(--m);font-size:.9rem;color:var(--teal);font-weight:500;display:block}
+.s3-st .l{font-size:.58rem;color:var(--text3);margin-top:1px;display:block}
+.s3-sl-box{background:var(--bg);border:1px solid var(--bdr);border-radius:10px;padding:9px 11px;width:100%;flex-shrink:0}
+.s3-sl-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.s3-sl-nm{font-size:.72rem;color:var(--text);font-weight:600}
+.s3-sl-vl{font-family:var(--m);font-size:.68rem;color:var(--teal);background:var(--surface);border:1px solid var(--bdr);border-radius:4px;padding:1px 6px}
+.s3-sl-box input{width:100%;accent-color:var(--teal);cursor:pointer;height:4px;border-radius:2px}
+.s3-content{overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;justify-content:center}
+.s3-lbl{font-size:.68rem;font-weight:700;letter-spacing:.12em;color:var(--text3);text-transform:uppercase;margin-bottom:1px}
+.s3-concept{background:var(--surface);border:1px solid var(--bdr2);border-radius:11px;padding:9px;display:flex;gap:10px}
+.s3-concept-ico{font-size:1.35rem;flex-shrink:0}
+.s3-concept-body h4{font-size:.92rem;font-weight:700;margin-bottom:3px}
+.s3-concept-body p{font-size:.8rem;color:var(--text2);line-height:1.6}
+.s3-formula{background:var(--surface);border:1px solid var(--teal-b);border-radius:11px;padding:14px;text-align:center}
+.s3-f-disp{font-family:var(--m);font-size:1.0rem;color:var(--amber);margin:7px 0}
+.s3-vars{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:5px}
+.s3-var{background:var(--teal-d);border:1px solid var(--teal-b);border-radius:20px;padding:2px 8px;font-size:.6rem;color:var(--teal);font-family:var(--m)}
+.s3-expl{font-size:.74rem;color:var(--text2);line-height:1.7;background:var(--surface);border:1px solid var(--bdr);border-radius:10px;padding:11px 13px}
+.s3-expl strong{color:var(--text)}
+.s3-funfact{background:linear-gradient(135deg,rgba(0,224,150,.07),rgba(124,95,255,.07));border:1px solid var(--teal-b);border-radius:11px;padding:12px;display:flex;gap:9px}
+.s3-ff-ico{font-size:1.4rem;flex-shrink:0}
+.s3-ff-body{font-size:.72rem;line-height:1.6;color:var(--text2)}
+.s3-ff-body strong{color:var(--teal)}
+.s3-exp-block{background:linear-gradient(135deg,rgba(0,224,150,.06),rgba(75,181,255,.05));border:1px solid rgba(0,224,150,.18);border-radius:12px;padding:13px 14px}
+.s3-exp-title{font-size:.78rem;font-weight:800;color:var(--teal);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.s3-exp-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:5px;font-size:.72rem}
+.s3-exp-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:4px}
+.s3-exp-row span{color:var(--text2);line-height:1.5}
+.s3-exp-row span strong{color:var(--text)}
+.s3-swing{background:var(--surface);border:1px solid var(--bdr2);border-radius:11px;padding:11px 13px;display:flex;gap:10px;align-items:flex-start}
+.s3-swing-ico{font-size:1.6rem;flex-shrink:0}
+.s3-swing-body{font-size:.72rem;color:var(--text2);line-height:1.6}
+.s3-swing-body strong{color:var(--text);font-size:.76rem}
+.s3-try{background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.2);border-radius:8px;padding:7px 11px;font-size:.68rem;color:var(--amber);font-weight:500}
+
+/* ══════ S4 PARAMS ══════ */
+.s4-body{flex:1;display:grid;grid-template-columns:60% 40%;min-height:0;overflow:hidden}
+@media(max-width:680px){.s4-body{grid-template-columns:1fr;grid-template-rows:280px 1fr}}
+.s4-lab{position:relative;overflow:hidden;background:var(--surface)}
+.s4-lab canvas{position:absolute;inset:0;width:100%;height:100%}
+.s4-right{border-left:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden}
+@media(max-width:680px){.s4-right{border-left:none;border-top:1px solid var(--bdr)}}
+.s4-rh{padding:13px 15px 11px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.s4-rh h4{font-size:.72rem;font-weight:700;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:6px}
+.s4-ct{display:flex;align-items:baseline;gap:4px}
+.s4-ct-n{font-size:1.3rem;font-weight:700;color:var(--teal);font-family:var(--m)}
+.s4-ct-l{font-size:.88rem;color:var(--text2)}
+.s4-prog{height:3px;background:var(--surface3);border-radius:2px;margin-top:5px;overflow:hidden}
+.s4-pf{height:100%;background:var(--teal);border-radius:2px;transition:width .4s}
+.s4-items{flex:1;overflow-y:auto;padding:9px;display:grid;grid-template-columns:1fr 1fr;gap:9px;align-content:start}
+.pi{background:var(--surface);border:1px solid var(--bdr);border-radius:13px;padding:14px 11px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.18s;min-height:72px;position:relative;overflow:hidden}
+.pi:hover:not(.found){border-color:var(--teal-b);background:var(--surface2);transform:scale(1.02)}
+.pi.found{border-color:rgba(54,240,160,.28);background:rgba(54,240,160,.05)}
+.pi-left{display:flex;flex-direction:column;gap:3px;flex:1}
+.pi-q{font-size:1.55rem;color:var(--text3);transition:.3s}
+.pi.found .pi-q{display:none}
+.pi-fc{display:none;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.pi.found .pi-fc{display:flex}
+.pi-fn{font-size:.82rem;font-weight:700;color:var(--green);line-height:1.2}
+ 
+.pi-fi{font-size:1.25rem;display:flex;align-items:center;justify-content:center;width:28px;height:28px}
+.pi-pulse{position:absolute;inset:0;border-radius:11px;border:2px solid var(--teal);opacity:0;pointer-events:none}
+.pi.jf .pi-pulse{animation:pip .5s ease-out forwards}
+@keyframes pip{0%{opacity:.8;transform:scale(.88)}100%{opacity:0;transform:scale(1.14)}}
+.s4-foot{padding:9px;border-top:1px solid var(--bdr);flex-shrink:0}
+.bubble-fl{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .2s;user-select:none}
+.bubble-fl:hover{transform:scale(1.18)!important}
+.bubble-fl.disc{opacity:.35;pointer-events:none;filter:grayscale(1)}
+/* param modal */
+.pm-ov{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
+.pm-ov.hidden{display:none}
+.pm-box{background:var(--surface2);border:1px solid rgba(0,224,150,.2);border-radius:18px;padding:22px 18px 18px;max-width:310px;width:90%;text-align:center}
+.pm-ico{width:52px;height:52px;margin:0 auto 10px;border-radius:14px;background:rgba(0,224,150,.08);border:1.5px solid rgba(0,224,150,.25);display:flex;align-items:center;justify-content:center;font-size:1.6rem}
+.pm-badge{font-size:.65rem;font-weight:700;letter-spacing:.12em;color:var(--text3);margin-bottom:4px}
+.pm-name{font-size:1.05rem;font-weight:800;color:var(--teal);margin-bottom:7px}
+.pm-sym{display:inline-block;background:rgba(245,166,35,.1);border:1.5px solid rgba(245,166,35,.3);border-radius:7px;padding:5px 16px;font-family:var(--m);font-size:.85rem;font-weight:700;color:var(--amber);margin-bottom:11px}
+.pm-desc{font-size:.78rem;color:var(--text2);line-height:1.72;text-align:left;background:rgba(0,224,150,.04);border:1px solid var(--teal-b);border-radius:9px;padding:10px 13px;margin-bottom:12px}
+.pm-btn{background:var(--green);color:#07090f;border:none;border-radius:8px;padding:9px 26px;font-size:.82rem;font-weight:700;cursor:pointer;width:100%;font-family:var(--f);transition:.18s}
+
+/* ══════ S5 DATA ══════ */
+.s5-body{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.s5-main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);min-height:0;overflow:hidden}
+@media(max-width:680px){.s5-main{grid-template-columns:1fr;overflow-y:auto}}
+.s5-left{display:flex;flex-direction:column;border-right:1px solid var(--bdr);overflow:hidden}
+@media(max-width:680px){.s5-left{border-right:none;border-bottom:1px solid var(--bdr)}}
+.s5-sliders-area{flex:1;overflow-y:auto;padding:10px}
+.s5-sl-box{background:var(--surface);border:1px solid var(--bdr);border-radius:10px;padding:9px 11px;margin-bottom:7px}
+.s5-sl-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.s5-sl-nm{font-size:.67rem;color:var(--text);font-weight:500}
+.s5-sl-vl{font-family:var(--m);font-size:.64rem;color:var(--teal);background:var(--surface2);border:1px solid var(--bdr);border-radius:4px;padding:1px 5px}
+.s5-sl-box input{width:100%;accent-color:var(--teal);cursor:pointer;height:3px}
+.s5-right{display:flex;flex-direction:column;overflow:hidden}
+.s5-stats-row{display:flex;gap:8px;padding:10px;flex-shrink:0}
+.s5-stat{background:var(--surface);border:1px solid var(--bdr);border-radius:10px;padding:10px 12px;flex:1;min-width:0;text-align:center}
+.s5-sv{font-family:var(--m);font-size:1.1rem;color:var(--teal);font-weight:700}
+.s5-sl{font-size:.58rem;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-top:2px}
+.s5-add-row{padding:0 10px 10px;display:flex;gap:7px;flex-shrink:0}
+.s5-add-row .btn{flex:1;font-size:.74rem;padding:8px 10px}
+.s5-new-flash{display:inline-block;background:var(--teal-d);border:1px solid var(--teal-b);color:var(--teal);border-radius:20px;padding:1px 7px;font-size:.6rem;font-weight:700;margin-left:5px;opacity:0;transition:opacity .2s}
+.s5-new-flash.on{opacity:1}
+.s5-tbl-wrap{flex:1;min-height:0;overflow:hidden;margin:0 10px 10px;background:var(--surface);border:1px solid var(--bdr);border-radius:10px;display:flex;flex-direction:column}
+.s5-tbl-scroll{flex:1;overflow-x:auto;overflow-y:auto}
+.s5-tbl{min-width:420px;border-collapse:collapse;font-size:.67rem;width:100%}
+.s5-tbl th{background:var(--surface2);padding:6px 9px;text-align:left;color:var(--text3);font-family:var(--m);font-size:.56rem;letter-spacing:.08em;position:sticky;top:0;white-space:nowrap;font-weight:700;border-bottom:1px solid var(--bdr);text-transform:uppercase}
+.s5-tbl td{padding:4px 9px;border-bottom:1px solid rgba(255,255,255,.025);color:var(--text2);font-family:var(--m);white-space:nowrap;font-size:.66rem}
+.s5-tbl tr:hover td{background:rgba(0,224,150,.025)}
+.s5-tbl tr.nr td{animation:rhl 2s ease forwards}
+@keyframes rhl{0%{background:rgba(0,224,150,.18)}100%{background:transparent}}
+.s5-tbl-foot{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;border-top:1px solid var(--bdr);background:var(--surface2);flex-shrink:0;border-radius:0 0 10px 10px}
+.s5-tbl-ct{font-size:.58rem;color:var(--text3);font-family:var(--m)}
+
+/* ══════ S6 CHOOSE MODEL ══════ */
+.s6-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 22px;gap:16px;overflow-y:auto}
+.s6-h2{font-size:1.18rem;font-weight:800;text-align:center;margin-bottom:2px}
+.s6-sub{font-size:.76rem;color:var(--text2);text-align:center;max-width:360px;line-height:1.6}
+.s6-ms{background:var(--surface);border:1px solid var(--teal-b);border-radius:12px;padding:10px 14px;font-size:.86rem;line-height:1.6;color:var(--text2);max-width:380px;text-align:center}
+.s6-ms strong{color:var(--teal)}
+.s6-cards{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.mc{background:var(--surface);border:2px solid var(--bdr);border-radius:14px;padding:18px 14px;width:180px;text-align:center;cursor:pointer;transition:.25s;position:relative}
+.mc:hover{border-color:rgba(124,95,255,.4);transform:translateY(-2px)}
+.mc.selected{border-color:var(--teal);background:var(--teal-d)}
+.mc-ico{font-size:1.9rem;margin-bottom:8px}
+.mc-an{font-size:.88rem;font-weight:700;margin-bottom:4px}
+.mc-desc{font-size:.76rem;color:var(--text2);line-height:1.5;margin-bottom:7px}
+.mc-hint{font-size:.7rem;color:var(--text3)}
+.mc-rec{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--amber);color:#07090f;border-radius:7px;padding:2px 8px;font-size:.58rem;font-weight:700;white-space:nowrap}
+.mc-nr{margin-top:9px;padding-top:9px;border-top:1px solid var(--bdr);font-size:.66rem;font-weight:700;color:var(--teal);letter-spacing:.04em;font-family:var(--m);display:none}
+.mc.selected .mc-nr{display:block}
+.mresp{background:var(--surface2);border:1px solid var(--teal-b);border-radius:11px;padding:10px 14px;font-size:.78rem;color:var(--text2);text-align:center;max-width:380px;opacity:0;transition:.4s;transform:translateY(6px)}
+.mresp.show{opacity:1;transform:translateY(0)}
+
+/* ══════ S7 TRAINING ══════ */
+.s7-body{flex:1;display:grid;grid-template-columns:55% 45%;min-height:0;overflow:hidden}
+@media(max-width:680px){.s7-body{grid-template-columns:1fr;overflow-y:auto}}
+.s7-left,.s7-right{display:flex;flex-direction:column;padding:12px;gap:8px;overflow-y:auto;overflow-x:hidden}
+.s7-left{border-right:1px solid var(--bdr)}
+@media(max-width:680px){.s7-left{border-right:none;border-bottom:1px solid var(--bdr)}}
+.s7-mhdr{background:var(--surface);border:1px solid var(--bdr2);border-radius:11px;padding:10px 13px;flex-shrink:0}
+.s7-mn{font-size:1.05rem;font-weight:800;margin-bottom:2px}
+.s7-md{font-size:.8rem;color:var(--text2);line-height:1.5}
+.s7-panel{background:var(--surface);border:1px solid var(--bdr);border-radius:11px;padding:12px;flex-shrink:0}
+.s7-ptitle{font-size:.7rem;font-weight:700;letter-spacing:.09em;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+.epoch-cv{width:100%;height:130px;border-radius:6px;background:var(--bg);border:1px solid var(--bdr);display:block}
+.tprog{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;margin-top:7px}
+.tprog-f{height:100%;background:linear-gradient(90deg,var(--teal),var(--purple));border-radius:2px;transition:width .2s}
+.train-log{background:var(--bg);border:1px solid var(--bdr);border-radius:7px;padding:7px 10px;overflow-y:auto;font-family:var(--m);font-size:.7rem;color:var(--text3);min-height:55px;max-height:85px;flex-shrink:0}
+.train-log div{margin-bottom:2px;color:var(--text2)}
+.train-log div.hl{color:var(--teal);font-weight:600}
+.derived-f-wrap{background:linear-gradient(135deg,rgba(0,224,150,.08),rgba(124,95,255,.06));border:1.5px solid var(--teal-b);border-radius:10px;padding:11px 13px;flex-shrink:0}
+.derived-f-lbl{font-size:.68rem;font-weight:700;letter-spacing:.1em;color:var(--teal);text-transform:uppercase;margin-bottom:5px}
+.derived-f-eq{font-family:var(--m);font-size:.9rem;color:var(--amber);line-height:1.6;font-weight:600;white-space:pre-wrap;word-break:break-all}
+.fb-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.fb-nm{font-size:.76rem;color:var(--text);width:108px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.fb-val{font-family:var(--m);font-size:.7rem;color:var(--text2);width:36px;text-align:right;flex-shrink:0}
+.fb-track{flex:1;height:7px;background:var(--surface3);border-radius:4px;overflow:hidden}
+.fb-fill{height:100%;border-radius:4px;transition:width .7s ease;background:var(--teal)}
+.feat-bars{display:flex;flex-direction:column;gap:0}
+.s7-disc{display:flex;flex-direction:column;gap:7px}
+.disc-row{display:flex;align-items:flex-start;gap:9px;background:var(--bg);border:1px solid var(--bdr);border-radius:8px;padding:8px 10px}
+.disc-pct{font-family:var(--m);font-size:.88rem;font-weight:700;color:var(--teal);flex-shrink:0;width:38px;padding-top:1px}
+.disc-text-main{font-size:.8rem;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:2px}
+.disc-text-sub{font-size:.72rem;color:var(--text2);line-height:1.4}
+.guess-panel{background:var(--surface2);border:1px solid var(--bdr2);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.guess-title{font-size:.72rem;font-weight:700;color:var(--text)}
+.guess-sub{font-size:.64rem;color:var(--text2);line-height:1.5}
+.drag-zone{display:flex;flex-direction:column;gap:4px;min-height:44px}
+.drag-slot{background:var(--bg);border:2px dashed var(--bdr2);border-radius:7px;padding:7px 10px;font-size:.66rem;color:var(--text3);display:flex;align-items:center;gap:7px;min-height:36px;transition:.15s;cursor:default}
+.drag-slot.filled{border-style:solid;border-color:var(--teal-b);background:var(--teal-d);color:var(--text)}
+.drag-slot.filled .slot-rank{background:var(--teal);color:#07090f}
+.drag-slot.drop-over{border-color:var(--teal);background:rgba(0,224,150,.05)}
+.slot-rank{width:18px;height:18px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;flex-shrink:0;color:var(--text3)}
+.param-chips{display:flex;flex-wrap:wrap;gap:4px}
+.param-chip{padding:4px 9px;background:var(--surface);border:1px solid var(--bdr2);border-radius:6px;font-size:.63rem;cursor:grab;color:var(--text2);transition:.15s;user-select:none;display:flex;align-items:center;gap:4px;font-family:var(--f);font-weight:500}
+.param-chip:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-d)}
+.param-chip.used{opacity:.3;pointer-events:none}
+.param-chip:active{cursor:grabbing}
+.guess-btns{display:flex;gap:6px}
+.guess-result{border-radius:8px;padding:9px 12px;font-size:.72rem;line-height:1.5;display:none}
+.guess-result.show{display:block}
+.guess-result.correct{background:rgba(54,240,160,.08);border:1px solid rgba(54,240,160,.25);color:var(--green)}
+.guess-result.wrong{background:rgba(240,84,84,.07);border:1px solid rgba(240,84,84,.2);color:var(--text)}
+.guess-result.close{background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.25);color:var(--amber)}
+.rank-reveal{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.rank-row{display:flex;align-items:center;gap:7px;padding:5px 8px;background:var(--bg);border:1px solid var(--bdr);border-radius:7px;opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s}
+.rank-row.show{opacity:1;transform:translateY(0)}
+.rank-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.64rem;font-weight:700;flex-shrink:0}
+.rank-num.gold{background:linear-gradient(135deg,#f5a623,#ffd060);color:#07090f}
+.rank-num.silver{background:linear-gradient(135deg,#8899aa,#aabbcc);color:#07090f}
+.rank-num.bronze{background:linear-gradient(135deg,#c07040,#e09060);color:#fff}
+.rank-num.rest{background:var(--surface3);color:var(--text3)}
+.rank-bar-wrap{flex:1;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.rank-bar-fill{height:100%;border-radius:3px;background:var(--teal);transition:width .7s ease}
+.rank-pct{font-family:var(--m);font-size:.6rem;color:var(--text2);width:30px;text-align:right}
+
+/* ══════ S8/S9 SIMULATION ══════ */
+.s8-body,.s9-body{flex:1;display:grid;grid-template-columns:60% 40%;min-height:0;overflow:hidden}
+@media(max-width:680px){.s8-body,.s9-body{grid-template-columns:1fr;overflow-y:auto}}
+.sim-pend,.tb-pend{
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:10px;padding:16px;background:var(--surface);
+  border-right:1px solid var(--bdr);overflow:hidden;position:relative
+}
+@media(max-width:680px){
+  .sim-pend,.tb-pend{
+    border-right:none;border-bottom:1px solid var(--bdr);
+    min-height:300px;height:auto;flex-shrink:0;
+    padding:12px;
+  }
+}
+@media(max-width:400px){
+  .sim-pend,.tb-pend{min-height:260px;padding:10px;gap:7px}
+}
+.sim-pend canvas,.tb-pend canvas{
+  border-radius:12px;width:100%;flex:1;
+  max-height:calc(100% - 110px);min-height:120px;display:block
+}
+@media(max-width:680px){
+  .sim-pend canvas,.tb-pend canvas{
+    flex:none;width:100%;height:200px;max-height:200px;min-height:160px;
+    border-radius:10px;
+  }
+}
+@media(max-width:400px){
+  .sim-pend canvas,.tb-pend canvas{height:170px;max-height:170px;min-height:140px}
+}
+.sim-ctrl,.tb-ctrl{
+  display:flex;flex-direction:column;padding:12px;gap:7px;
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+}
+@media(max-width:680px){
+  .sim-ctrl,.tb-ctrl{
+    overflow-y:visible;overflow-x:hidden;
+    flex-shrink:0;padding:12px 10px;
+  }
+}
+.src-card{background:var(--bg);border:1px solid var(--bdr2);border-radius:10px;padding:10px 18px;text-align:center;flex-shrink:0}
+.src-lbl{font-size:.7rem;color:var(--text3);letter-spacing:.07em;text-transform:uppercase}
+.src-val{font-family:var(--m);font-size:1.6rem;font-weight:700;color:var(--teal)}
+.src-unit{font-size:.73rem;color:var(--text3)}
+.sim-ctrl-t{font-size:.7rem;font-weight:700;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;flex-shrink:0}
+.sim-sl-g{background:var(--surface);border:1px solid var(--bdr);border-radius:7px;padding:7px 9px}
+.sim-sl-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.sim-sl-nm{font-size:.72rem;color:var(--text);font-weight:500}
+.sim-sl-vl{font-family:var(--m);font-size:.69rem;color:var(--teal);background:var(--surface2);border:1px solid var(--bdr);border-radius:4px;padding:1px 4px}
+.sim-sl-g input{width:100%;accent-color:var(--teal);cursor:pointer;height:3px}
+.stepper-box{background:var(--surface);border:1px solid var(--bdr);border-radius:9px;padding:8px 10px;display:flex;flex-direction:column;gap:5px}
+.stepper-top{display:flex;align-items:center;justify-content:space-between}
+.stepper-nm{font-size:.73rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:4px}
+.step-btn{width:24px;height:24px;background:transparent;border:none;color:var(--text2);font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;font-family:var(--f);font-weight:700;flex-shrink:0}
+.step-val{font-family:var(--m);font-size:.73rem;color:var(--teal);min-width:60px;text-align:center;font-weight:600;padding:0 3px}
+.step-preset{padding:2px 6px;border-radius:4px;border:1px solid var(--bdr2);background:transparent;color:var(--text3);font-size:.64rem;cursor:pointer;transition:.15s;font-family:var(--f);font-weight:600;white-space:nowrap}
+.stepper-ctrl{display:flex;align-items:center;gap:0;background:var(--bg);border:1px solid var(--bdr2);border-radius:6px;overflow:hidden}
+
+.step-btn:hover{background:var(--surface2);color:var(--teal)}
+.step-btn:active{background:var(--teal-d)}
+
+.step-presets{display:flex;gap:3px;flex-wrap:wrap}
+
+
+.step-preset:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-d)}
+.step-preset.active{border-color:var(--teal);color:#07090f;background:var(--teal);font-weight:700}
+.sim-group-box{background:var(--surface);border:1px solid var(--bdr2);border-radius:10px;overflow:hidden;margin-bottom:7px;flex-shrink:0}
+.sim-group-hdr{padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:6px;cursor:pointer;user-select:none}
+.sim-group-hdr-left{display:flex;align-items:center;gap:6px}
+.sim-group-badge{padding:2px 8px;border-radius:20px;font-size:.63rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.sim-group-badge.high{background:rgba(240,84,84,.15);border:1px solid rgba(240,84,84,.4);color:#f05454}
+.sim-group-badge.med{background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.35);color:var(--amber)}
+.sim-group-badge.low{background:rgba(74,181,255,.1);border:1px solid rgba(74,181,255,.3);color:var(--blue)}
+.sim-group-title{font-size:.72rem;font-weight:700;color:var(--text)}
+.sim-group-chevron{font-size:.6rem;color:var(--text3);transition:transform .2s}
+.sim-group-chevron.open{transform:rotate(90deg)}
+.sim-group-body{padding:0 10px 8px;display:flex;flex-direction:column;gap:5px}
+.sim-group-body.hidden{display:none}
+.sim-group-locked{padding:6px 10px 9px;text-align:center;font-size:.65rem;color:var(--text3);font-style:italic}
+.sim-fbox{background:var(--surface);border:1px solid var(--teal-b);border-radius:9px;padding:9px 11px;flex-shrink:0}
+.sfc-lbl{font-size:.67rem;font-weight:700;letter-spacing:.1em;color:var(--text3);margin-bottom:4px;text-transform:uppercase}
+.sfc-f{font-family:var(--m);font-size:.82rem;color:var(--amber);line-height:1.6;white-space:pre-wrap;word-break:break-all}
+.tb-fh{background:var(--surface);border:1px solid var(--bdr2);border-radius:11px;padding:12px;text-align:center;flex-shrink:0}
+.f-lbl{font-size:.67rem;font-weight:700;letter-spacing:.1em;color:var(--text3);margin-bottom:5px;text-transform:uppercase}
+.f-eq{font-family:var(--m);font-size:1.1rem;color:var(--amber);margin-bottom:4px}
+.f-note{font-size:.74rem;color:var(--text3)}
+.cmp-row{display:flex;gap:8px}
+.cmp-cell{background:var(--surface);border:1px solid var(--bdr);border-radius:9px;padding:9px 11px;flex:1;text-align:center}
+.cc-ai{color:var(--teal)}.cc-tb{color:var(--amber)}
+.cc-lbl{font-size:.67rem;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em}
+.cc-val{font-family:var(--m);font-size:1.08rem;font-weight:700}
+.diff-box{background:rgba(124,95,255,.07);border:1px solid rgba(124,95,255,.2);border-radius:var(--rs);padding:9px;font-size:.78rem;color:var(--text2);line-height:1.55}
+/* TB world picker */
+.tb-section-lbl{font-size:.67rem;font-weight:700;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-top:3px;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.tb-world-row{display:flex;gap:5px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.tb-world-row::-webkit-scrollbar{display:none}
+.tb-world{flex:1;min-width:48px;background:var(--surface);border:2px solid var(--bdr2);border-radius:10px;padding:7px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:.18s;flex-shrink:0}
+.tb-world:hover{border-color:rgba(245,166,35,.4);background:var(--surface2)}
+.tb-world.active{border-color:var(--amber);background:rgba(245,166,35,.08)}
+.tb-world-orb{width:26px;height:26px;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.4),inset 0 -3px 6px rgba(0,0,0,.3)}
+.tb-world-name{font-size:.68rem;font-weight:700;color:var(--text)}
+.tb-world-g{font-size:.6rem;color:var(--text3);font-family:var(--m)}
+.tb-custom-stepper{display:flex;align-items:center;gap:0;background:var(--bg);border:1px solid var(--bdr2);border-radius:5px;overflow:hidden}
+.tb-step-btn{width:22px;height:22px;background:transparent;border:none;color:var(--text2);font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--f);font-weight:700;transition:.15s}
+.tb-step-btn:hover{background:var(--surface2);color:var(--teal)}
+.tb-custom-g-row{display:flex;align-items:center;justify-content:space-between;margin-top:3px;margin-bottom:2px}
+.tb-step-val{font-family:var(--m);font-size:.7rem;color:var(--amber);min-width:55px;text-align:center;font-weight:600}
+/* angle picker */
+.tb-angle-row{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.tb-angle-row::-webkit-scrollbar{display:none}
+.tb-angle-btn{flex:1;min-width:56px;background:var(--surface);border:2px solid var(--bdr2);border-radius:10px;padding:7px 5px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:.18s}
+.tb-angle-btn:hover{border-color:rgba(245,166,35,.4);background:var(--surface2)}
+.tb-angle-btn.active{border-color:var(--amber);background:rgba(245,166,35,.08);color:var(--amber)}
+.tb-angle-icon{width:32px;height:36px}
+.tb-angle-label{font-size:.63rem;font-weight:700;color:var(--text2)}
+.tb-angle-deg{font-size:.68rem;font-weight:700;font-family:var(--m);color:var(--text3)}
+.tb-angle-btn.active .tb-angle-label,.tb-angle-btn.active .tb-angle-deg{color:var(--amber)}
+/* goal flash overlay */
+.goal-flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:10;opacity:0;transition:opacity .4s}
+.goal-flash.show{opacity:1}
+.goal-flash-inner{background:rgba(0,224,150,.18);border:2.5px solid var(--teal);border-radius:18px;padding:18px 28px;text-align:center;backdrop-filter:blur(4px);box-shadow:0 0 40px rgba(0,224,150,.3)}
+.goal-flash-inner .gf-title{font-size:2rem;font-weight:900;color:var(--teal);letter-spacing:.06em;text-shadow:0 0 20px rgba(0,224,150,.6)}
+.goal-flash-inner .gf-emoji{font-size:2.4rem;margin-bottom:4px}
+.goal-flash-inner .gf-sub{font-size:.82rem;color:var(--text2);margin-top:6px;font-weight:600}
+
+/* ══════ S10 NOTEBOOK ══════ */
+.s10-body{flex:1;display:flex;flex-direction:column;align-items:center;padding:12px 14px 8px;overflow:hidden;gap:8px;background:var(--bg)}
+.book-scene{flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:0;perspective:2000px}
+.book-wrap{width:min(760px,97vw);height:min(440px,62vh);position:relative;transform-style:preserve-3d;user-select:none}
+.book-wrap::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:4px;transform:translateX(-50%);background:linear-gradient(to right,rgba(0,0,0,.18),rgba(0,0,0,.06));z-index:5;pointer-events:none}
+.bk-spread{width:100%;height:100%;display:flex;border-radius:4px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.55),0 4px 16px rgba(0,0,0,.3)}
+.bk-left,.bk-right{flex:1;height:100%;background:#faf6ee;padding:18px 16px 28px;overflow:hidden;position:relative;font-size:.77rem;line-height:1.65;color:#2a1f0e}
+.bk-left{border-right:1px solid rgba(0,0,0,.1);background-color:#f0f6ff;background-image:repeating-linear-gradient(to bottom,#f0f6ff 0,#f0f6ff 27px,#c8d8f0 28px,#f0f6ff 28px);box-shadow:inset -6px 0 18px rgba(0,0,0,.07)}
+.bk-right{background-color:#fdf8ee;background-image:repeating-linear-gradient(to bottom,#fdf8ee 0,#fdf8ee 27px,#e8d8b0 28px,#fdf8ee 28px);box-shadow:inset 6px 0 18px rgba(0,0,0,.07)}
+.bk-left h3,.bk-right h3{font-size:.86rem;font-weight:700;margin-bottom:6px;line-height:1.3}
+.bk-left h3{color:#0d3d7a}.bk-right h3{color:#5c3500}
+.bk-left p,.bk-right p{margin-bottom:5px;font-size:.74rem;color:#2a1f0e;line-height:1.55}
+.bk-pg-num{position:absolute;bottom:9px;font-size:.56rem;color:rgba(0,0,0,.3);font-style:italic}
+.bk-left .bk-pg-num{left:14px}
+.bk-right .bk-pg-num{right:14px}
+.bk-lbl{font-size:.56rem;font-weight:700;letter-spacing:.09em;color:#7c6540;text-transform:uppercase;margin-bottom:1px;display:block;margin-top:4px}
+.bk-left .bk-lbl{color:#2a4a7a}
+.bk-right .bk-lbl{color:#7c6540}
+.bk-left .bk-lbl{color:#2a4a7a}.bk-right .bk-lbl{color:#7c6540}
+.bk-val{background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-radius:4px;padding:2px 7px;font-family:var(--m);font-size:.7rem;color:#1a0f05;margin-bottom:3px;display:block}
+/* Flipping page overlay */
+.bk-flip{position:absolute;top:0;right:0;width:50%;height:100%;transform-origin:left center;transform-style:preserve-3d;pointer-events:none;z-index:10;will-change:transform;display:none}
+.bk-flip.anim,.bk-flip.anim-rev{display:block}
+.bk-flip.anim{animation:pageFlip .45s cubic-bezier(.45,0,.55,1) forwards}
+.bk-flip.anim-rev{animation:pageFlipRev .45s cubic-bezier(.45,0,.55,1) forwards}
+@keyframes pageFlip{0%{transform:rotateY(0deg)}100%{transform:rotateY(-180deg)}}
+@keyframes pageFlipRev{0%{transform:rotateY(-180deg)}100%{transform:rotateY(0deg)}}
+.bk-flip-front,.bk-flip-back{position:absolute;inset:0;backface-visibility:hidden;padding:18px 16px 28px;font-size:.77rem;line-height:1.65;color:#2a1f0e;overflow:hidden}
+.bk-flip-back{transform:rotateY(180deg);background-color:#f0f6ff;background-image:repeating-linear-gradient(to bottom,#f0f6ff 0,#f0f6ff 27px,#c8d8f0 28px,#f0f6ff 28px);box-shadow:inset -6px 0 18px rgba(0,0,0,.07)}
+.bk-flip-front{background-color:#fdf8ee;background-image:repeating-linear-gradient(to bottom,#fdf8ee 0,#fdf8ee 27px,#e8d8b0 28px,#fdf8ee 28px);box-shadow:inset 6px 0 18px rgba(0,0,0,.07)}
+.bk-flip-front h3{color:#5c3500}.bk-flip-back h3{color:#0d3d7a}
+.bk-flip-front h3,.bk-flip-back h3{font-size:.88rem;font-weight:700;margin-bottom:7px;line-height:1.3}
+.bk-flip-front p,.bk-flip-back p{margin-bottom:6px;font-size:.75rem;color:#2a1f0e}
+.bk-flip-front .bk-lbl{color:#7c6540}.bk-flip-back .bk-lbl{color:#2a4a7a}
+.bk-flip-front .bk-page-header{color:#8c5a00;border-bottom-color:#8c5a00}
+.bk-flip-back .bk-page-header{color:#1a5faa;border-bottom-color:#1a5faa}
+.bk-flip-front .bk-val,.bk-flip-back .bk-val{display:block;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-radius:4px;padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:#1a0f05;margin-bottom:4px}
+.bk-drag-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:.58rem;color:rgba(0,0,0,.22);font-style:italic;pointer-events:none;white-space:nowrap;z-index:20}
+.book-nav{display:flex;align-items:center;gap:14px;flex-shrink:0}
+.bn2{background:var(--surface);border:1px solid var(--bdr2);color:var(--text2);font-size:.73rem;padding:7px 14px;border-radius:var(--rs);cursor:pointer;font-weight:600;transition:.2s}
+.bk-pg-ct{font-size:.7rem;color:var(--text2)}
+.bn2:hover:not(:disabled){border-color:var(--teal);color:var(--teal)}
+.bn2:disabled{opacity:.28;cursor:not-allowed}
+.s10-cta{background:var(--surface);border:1px solid var(--bdr2);border-radius:12px;padding:10px 18px;text-align:center;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;max-width:520px}
+.s10-cta h3{font-size:.85rem;font-weight:700}
+.s10-cta p{font-size:.72rem;color:var(--text2);margin-bottom:8px}
+.s10-btns{display:flex;gap:8px;justify-content:center}
+
+/* ══════ QUIZ MODAL ══════ */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.84);z-index:600;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(7px)}
+.modal-ov.hidden{display:none}
+.quiz-box{background:var(--surface2);border:1px solid var(--bdr2);border-radius:18px;padding:20px 18px 16px;max-width:460px;width:94%;max-height:87vh;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.quiz-hdr{display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0}
+.qclose{background:none;border:none;color:var(--text3);font-size:1.05rem;cursor:pointer;padding:0;transition:.2s}
+.qclose:hover{color:var(--red)}
+.quiz-pb-w{height:3px;background:var(--surface3);border-radius:2px;overflow:hidden;flex-shrink:0}
+.quiz-pb{height:100%;background:linear-gradient(90deg,var(--purple),var(--teal));border-radius:2px;transition:width .35s}
+.quiz-body{flex:1;overflow-y:auto}
+.quiz-foot{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding-top:4px}
+.qscore{font-size:.7rem;color:var(--text3);font-family:var(--m)}
+.duo-q{font-size:.88rem;font-weight:600;line-height:1.55;margin-bottom:12px;color:var(--text)}
+.duo-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+.duo-opt{background:var(--surface);border:2px solid var(--bdr2);border-radius:11px;padding:10px 13px;cursor:pointer;display:flex;align-items:center;gap:9px;font-size:.78rem;transition:.18s;font-family:var(--f)}
+.duo-opt:hover:not(.locked){border-color:var(--purple);background:rgba(124,95,255,.07)}
+.duo-opt.cor{border-color:var(--green);background:rgba(54,240,160,.07);color:var(--green)}
+.duo-opt.wrg{border-color:var(--red);background:rgba(240,84,84,.06);color:var(--red)}
+.duo-opt.locked{cursor:not-allowed}
+.duo-lt{width:20px;height:20px;border-radius:5px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0}
+.duo-fb{border-radius:9px;padding:10px 13px;display:flex;align-items:flex-start;gap:9px;font-size:.74rem;line-height:1.5}
+.duo-fb.cor-fb{background:rgba(54,240,160,.07);border:1px solid rgba(54,240,160,.2)}
+.duo-fb.wrg-fb{background:rgba(240,84,84,.05);border:1px solid rgba(240,84,84,.18)}
+.duo-fb-t{color:var(--text2)}.duo-fb-t strong{color:var(--text)}
+.duo-life{font-size:.86rem;opacity:.9}.duo-life.lost{opacity:.18;filter:grayscale(1)}
+.duo-res{text-align:center;display:flex;flex-direction:column;align-items:center;gap:9px;padding:8px 0}
+.duo-re{font-size:2.5rem}
+.duo-rs{font-family:var(--m);font-size:1.9rem;color:var(--teal);font-weight:700}
+.duo-rr{font-size:.9rem;font-weight:700}
+.duo-rm{font-size:.72rem;color:var(--text2);max-width:280px}
+.duo-xb{width:190px;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.duo-xf{height:100%;background:linear-gradient(90deg,var(--amber),var(--teal));transition:width 1s ease}
+
+/* ══════ BADGE MODAL ══════ */
+.badge-ov{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:700;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.badge-ov.hidden{display:none}
+.badge-in{background:linear-gradient(180deg,rgba(10,14,22,.98),rgba(8,12,18,.98));border:1px solid var(--teal-b);border-radius:20px;padding:18px;max-width:420px;width:92%;text-align:center;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.badge-close{position:absolute;top:11px;right:13px;background:none;border:none;color:var(--text3);font-size:1.05rem;cursor:pointer;transition:.2s}
+.badge-close:hover{color:var(--red)}
+.badge-ttl{font-size:.64rem;font-weight:700;letter-spacing:.18em;color:var(--teal);margin-bottom:12px;text-transform:uppercase}
+.badge-card{background:linear-gradient(145deg,#07101b,#0d1a2d 45%,#081018);border:1px solid rgba(0,224,150,.2);border-radius:16px;padding:18px;text-align:left;position:relative;overflow:hidden;width:100%}
+.badge-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 20%,rgba(0,224,150,.08),transparent 60%);pointer-events:none}
+@keyframes bpop{0%{transform:scale(0) rotate(-12deg);opacity:0}60%{transform:scale(1.08) rotate(2deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.badge-card.pop{animation:bpop .5s cubic-bezier(.34,1.56,.64,1) forwards}
+.bc-ribbon{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(90deg,rgba(245,158,11,.15),rgba(245,158,11,.08));border:1px solid rgba(245,158,11,.4);border-radius:999px;padding:4px 11px;font-size:.6rem;font-weight:700;letter-spacing:.07em;color:#f59e0b;margin-bottom:12px;text-transform:uppercase}
+.bc-name-row{display:flex;align-items:center;gap:9px;margin-bottom:11px;padding-bottom:11px;border-bottom:1px solid rgba(255,255,255,.055)}
+.bc-icon{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--teal),var(--purple));display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.bc-sname{font-size:.98rem;font-weight:700;color:var(--text)}
+.bc-ssub{font-size:.58rem;color:var(--teal);font-family:var(--m);margin-top:1px}
+.bc-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:11px}
+.bc-sc{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.018));border:1px solid rgba(255,255,255,.065);border-radius:9px;padding:8px 9px}
+.bc-sl{font-size:.52rem;font-weight:700;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:2px}
+.bc-sv{font-family:var(--m);font-size:.88rem;font-weight:700;color:var(--amber)}
+.bc-ss{font-size:.56rem;color:var(--text3);margin-top:1px}
+.bc-rank{background:linear-gradient(90deg,rgba(0,224,150,.08),rgba(124,95,255,.07));border:1px solid rgba(0,224,150,.16);border-radius:9px;padding:9px 11px;margin-bottom:10px}
+.bc-rl{font-size:.52rem;font-weight:700;letter-spacing:.12em;color:var(--text3);text-transform:uppercase;margin-bottom:2px}
+.bc-rv{font-size:.88rem;font-weight:700;color:var(--teal)}
+.bc-corner{position:absolute;top:10px;right:12px;font-size:.54rem;font-weight:700;letter-spacing:.14em;color:rgba(0,224,150,.45);text-transform:uppercase}
+.bc-foot{display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,.045)}
+.bc-date{font-size:.54rem;color:var(--text3);font-family:var(--m)}
+.bc-logo{font-size:.54rem;font-weight:700;color:rgba(0,224,150,.4);letter-spacing:.06em}
+.badge-btns{display:flex;gap:7px;margin-top:10px}
+.badge-btns .btn{flex:1;font-size:.74rem}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* ══════════════════════════════════════════════
+   COMPREHENSIVE RESPONSIVE OVERHAUL
+   Breakpoints: xs<400 | sm<600 | md<768 | lg<960
+══════════════════════════════════════════════ */
+@media(max-width:400px){:root{font-size:12px}}
+@media(min-width:401px) and (max-width:600px){:root{font-size:13px}}
+
+@media(max-width:480px){
+  .topbar{height:44px;padding:0 8px;gap:4px}
+  .tl-logo{font-size:.75rem;gap:4px}
+  .tl-logo-mark{width:22px;height:22px;font-size:.72rem;border-radius:6px}
+  .stage-pills{max-width:38vw;gap:2px}
+  .sp{height:19px;padding:0 5px;font-size:.56rem}
+  .tl-name{max-width:50px;font-size:.62rem}
+  .tl-home{font-size:.6rem;padding:3px 6px}
+}
+@media(max-width:360px){
+  .stage-pills{max-width:32vw}
+  .tl-name{display:none}
+}
+@media(max-width:480px){
+  .bnav{height:46px;padding:0 8px}
+  .bnav-c strong{font-size:.64rem}
+  .bnav-c{font-size:.58rem}
+  .bb{font-size:.63rem;padding:5px 8px;gap:3px}
+}
+@media(max-width:360px){
+  .bnav{height:42px;padding:0 6px}
+  .bb{font-size:.58rem;padding:4px 6px}
+  .bnav-c{display:none}
+}
+@media(max-width:480px){.btn{padding:7px 12px;font-size:.71rem}}
+
+/* S1 */
+@media(max-width:960px){.s1-body{gap:20px;padding:14px 18px}}
+@media(max-width:680px){
+  .s1-body{flex-direction:column;gap:10px;overflow-y:auto;padding:10px 12px;align-items:center}
+  .s1-content{max-width:100%;width:100%}
+  .s1-h{font-size:.98rem}
+  .s1-p{font-size:.76rem}
+}
+@media(max-width:400px){
+  .s1-h{font-size:.88rem}
+  .s1-facts{gap:4px}
+  .s1-fact{font-size:.7rem;padding:6px 9px;gap:6px}
+}
+@media(max-width:680px){
+  #stage-1{overflow:hidden}
+  #stage-1 .s1-body{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;height:100%}
+}
+
+/* S2 */
+@media(max-width:680px){
+  .s2-body{padding:10px 10px 0;gap:8px}
+  .hc{width:155px;height:190px}
+  .s2-h2{font-size:.92rem}
+  .s2-sub{font-size:.7rem}
+  .hc-name{font-size:.82rem}
+  .hc-desc{font-size:.71rem}
+}
+@media(max-width:400px){
+  .hc{width:145px;height:178px}
+  .s2-row{gap:7px}
+  .hc-f,.hc-b{padding:10px}
+}
+@media(max-width:340px){.hc{width:130px;height:162px}.s2-row{gap:5px}}
+@media(max-width:680px){
+  #stage-2{overflow:hidden}
+  #stage-2 .s2-body{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;height:100%}
+}
+
+/* S3 */
+@media(max-width:960px){.s3-body{grid-template-columns:45% 55%}}
+@media(max-width:680px){
+  .s3-body{grid-template-columns:1fr;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .s3-vis{border-right:none;border-bottom:1px solid var(--bdr);min-height:220px;max-height:none;padding:12px;flex-shrink:0}
+  .s3-cv-box{max-height:160px;min-height:140px}
+  .s3-content{padding:10px 12px;gap:6px;flex-shrink:0}
+}
+@media(max-width:400px){
+  .s3-vis{min-height:180px;padding:10px;gap:5px}
+  .s3-stats{gap:4px}
+  .s3-st .v{font-size:.78rem}
+  .s3-concept-body h4{font-size:.82rem}
+  .s3-concept-body p{font-size:.73rem}
+}
+@media(max-width:680px){
+  #stage-3{overflow:hidden}
+  #stage-3 .s3-body{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;height:100%;max-height:100%}
+}
+
+/* S4 */
+@media(max-width:960px){.s4-body{grid-template-columns:55% 45%}}
+@media(max-width:680px){
+  .s4-body{grid-template-columns:1fr;grid-template-rows:260px auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+  .s4-right{overflow:visible;min-height:300px;flex-shrink:0}
+  .s4-items{max-height:none;overflow-y:visible}
+}
+@media(max-width:400px){
+  .s4-body{grid-template-rows:210px auto}
+  .s4-items{grid-template-columns:1fr 1fr;gap:6px;padding:7px}
+  .pi{min-height:60px;padding:10px 7px}
+  .s4-rh{padding:9px 11px 8px}
+  .pi-fn{font-size:.76rem}
+}
+@media(max-width:680px){
+  #stage-4{overflow:hidden}
+  #stage-4 .s4-body{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;height:100%;max-height:100%}
+}
+
+/* S5 */
+@media(max-width:960px){.s5-main{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+@media(max-width:680px){
+  .s5-main{grid-template-columns:1fr;overflow-y:auto}
+  .s5-left{border-right:none;border-bottom:1px solid var(--bdr);max-height:none;flex-shrink:0}
+  .s5-right{min-height:240px;flex-shrink:0}
+}
+@media(max-width:400px){
+  .s5-stats-row{gap:5px;padding:8px}
+  .s5-stat{padding:8px 8px}
+  .s5-sv{font-size:1rem}
+  .stepper-box{padding:6px 8px}
+  .step-btn{width:22px;height:22px}
+  .step-val{min-width:50px;font-size:.68rem}
+  .step-preset{font-size:.58rem;padding:2px 5px}
+}
+@media(max-width:680px){
+  #stage-5{overflow:hidden}
+  #stage-5 .s5-body{overflow:hidden;flex:1}
+  #stage-5 .s5-main{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;height:100%}
+}
+
+/* S6 */
+@media(max-width:680px){
+  .s6-body{padding:12px 12px;gap:10px}
+  .s6-cards{gap:8px}
+  .mc{width:150px;padding:13px 10px}
+  .mc-ico{font-size:1.55rem;margin-bottom:6px}
+  .mc-an{font-size:.8rem}
+  .mc-desc{font-size:.7rem}
+  .s6-h2{font-size:1.05rem}
+  .s6-sub{font-size:.76rem}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tl-logo"><div class="tl-logo-mark">⚽</div>DiscoveryLab</div>
+  <div class="stage-pills" id="stagePills"></div>
+  <div class="tl-right">
+    <span class="tl-name" id="tbName"></span>
+    <button class="tl-home" onclick="goHome()">← Physics</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: LAB ══ -->
+<div class="screen active" id="screen-lab">
+
+  <!-- S1 REAL WORLD -->
+  <div class="stage-panel active" id="stage-1">
+    <div class="s1-body fade">
+      <div class="s1-scene-wrap"><canvas id="cvScene"></canvas></div>
+      <div class="s1-content">
+        <div class="s1-ey">Stage 01 · Real World</div>
+        <div class="s1-h">How a football travels through the air.</div>
+        <div class="s1-p">Every time a player kicks a ball, they unknowingly solve a physics problem. The ball follows a curved path called a <em>parabolic trajectory</em> — governed entirely by launch angle, speed, and gravity.</div>
+        <div class="s1-facts">
+          <div class="s1-fact">⚽ A 45° launch angle gives the <strong>maximum range</strong> on flat ground.</div>
+          <div class="s1-fact">🌍 On the Moon, the same kick would send the ball <strong>6× farther</strong>.</div>
+          <div class="s1-fact">💨 Air resistance and spin (Magnus effect) alter the <strong>real flight path</strong>.</div>
+        </div>
+      </div>
+    </div>
+    <div class="bnav"><div style="width:74px"></div><div class="bnav-c"><strong>Stage 1 of 10</strong>Real-World Context</div><button class="bb p" onclick="goToStage(2)">History →</button></div>
+  </div>
+
+  <!-- S2 HISTORY -->
+  <div class="stage-panel" id="stage-2">
+    <div class="s2-body fade">
+      <div><div class="s2-h2">How scientists discovered projectile motion</div><div class="s2-sub">Flip each card to reveal the insight.</div></div>
+      <div class="s2-row" id="historyCards"></div>
+      <div class="s2-prog-area">
+        <div style="font-size:.7rem;color:var(--text2);margin-bottom:5px;display:flex;justify-content:space-between"><span><span id="cardsReadNum">0</span> of 3 explored</span><strong id="cardsPct" style="color:var(--text)">0%</strong></div>
+        <div class="s2-prog-bar"><div class="s2-prog-fill" id="s2PF" style="width:0%"></div></div>
+        <div class="s2-fb" id="s2FB"><span>🔬</span><span>Foundation of projectile science unlocked!</span></div>
+      </div>
+    </div>
+    <div class="bnav"><button class="bb" onclick="goToStage(1)">← Real World</button><div class="bnav-c"><strong>Step 2 of 10</strong>History</div><button class="bb p" id="histNextBtn" onclick="goToStage(3)" disabled>Theory →</button></div>
+  </div>
+
+  <!-- S3 THEORY -->
+  <div class="stage-panel" id="stage-3">
+    <div class="s3-body">
+      <div class="s3-vis">
+        <div class="s3-cv-box"><canvas id="theoryProjCanvas"></canvas></div>
+        <div class="s3-stats">
+          <div class="s3-st"><span class="v" id="theoryR">—</span><span class="l">Range (m)</span></div>
+          <div class="s3-st"><span class="v" id="theoryH">—</span><span class="l">Max Height (m)</span></div>
+          <div class="s3-st"><span class="v" id="theoryT">—</span><span class="l">Time (s)</span></div>
+        </div>
+        <div class="s3-sl-box">
+          <div class="s3-sl-top"><span class="s3-sl-nm">📐 Launch Angle (θ)</span><span class="s3-sl-vl" id="s3Av">45°</span></div>
+          <input type="range" id="s3A" min="5" max="85" step="1" value="45" oninput="updateTheorySliders()">
+        </div>
+        <div class="s3-sl-box">
+          <div class="s3-sl-top"><span class="s3-sl-nm">🚀 Initial Speed (v₀)</span><span class="s3-sl-vl" id="s3Vv">20 m/s</span></div>
+          <input type="range" id="s3V" min="5" max="50" step="1" value="20" oninput="updateTheorySliders()">
+        </div>
+        <div class="s3-try">Adjust angle and speed — watch the trajectory change!</div>
+      </div>
+      <div class="s3-content fade">
+        <div class="s3-exp-block">
+          <div class="s3-exp-title">🔬 This Experiment</div>
+          <div class="s3-exp-row"><div class="s3-exp-dot"></div><span><strong>What we are doing:</strong> Launching a projectile and measuring how far and how high it goes.</span></div>
+          <div class="s3-exp-row"><div class="s3-exp-dot"></div><span><strong>Our aim:</strong> Find what controls the range and maximum height.</span></div>
+          <div class="s3-exp-row"><div class="s3-exp-dot"></div><span><strong>What we will find:</strong> Formulas that predict the trajectory with high accuracy.</span></div>
+        </div>
+        <div class="s3-swing">
+          <div class="s3-swing-ico">⚽</div>
+          <div class="s3-swing-body"><strong>Think of kicking a football.</strong> A shallow kick travels far but stays low. A steep kick goes high but lands nearby. At 45°, you get the perfect balance. Gravity pulls the ball down the same way, every time — only your initial kick determines the path.</div>
+        </div>
+        <div>
+          <div class="s3-lbl">Key Formulas</div>
+          <div class="s3-formula">
+            <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;color:var(--text3);font-family:'Inter',sans-serif">PROJECTILE MOTION EQUATIONS</div>
+            <div class="s3-f-disp">R = v₀²·sin(2θ) / g</div>
+            <div class="s3-f-disp" style="font-size:.85rem;margin-top:2px">H = v₀²·sin²(θ) / 2g</div>
+            <div class="s3-vars"><span class="s3-var">R = range (m)</span><span class="s3-var">H = max height (m)</span><span class="s3-var">v₀ = initial speed (m/s)</span><span class="s3-var">θ = angle (°)</span><span class="s3-var">g = gravity (m/s²)</span></div>
+          </div>
+        </div>
+        <div class="s3-funfact">
+          <div class="s3-ff-ico">🏆</div>
+          <div class="s3-ff-body">A ball kicked at <strong>20 m/s at 45°</strong> on Earth travels about <strong>40 metres</strong>. The same kick on the Moon would land over <strong>240 metres</strong> away — well past most football pitches!</div>
+        </div>
+        <div style="background:rgba(124,95,255,.08);border:1px solid rgba(124,95,255,.22);border-radius:10px;padding:10px 13px;font-size:.74rem;color:var(--text2);font-family:'Inter',sans-serif;line-height:1.6">
+          <strong style="color:var(--purple)">Now it is your turn.</strong> In the next steps you will work as a scientist — collecting real measurements, training an AI model, and comparing what the AI finds to the textbook formulas.
+        </div>
+      </div>
+    </div>
+    <div class="bnav"><button class="bb" onclick="goToStage(2)">← History</button><div class="bnav-c"><strong>Step 3 of 10</strong>Theory</div><button class="bb p" onclick="goToStage(4)">Parameters →</button></div>
+  </div>
+
+  <!-- S4 PARAMS -->
+  <div class="stage-panel" id="stage-4">
+    <div class="s4-body fade">
+      <div class="s4-lab" id="labScene"><canvas id="labCanvas"></canvas></div>
+      <div class="s4-right">
+        <div class="s4-rh">
+          <h4>PARAMETERS FOUND</h4>
+          <div class="s4-ct"><div class="s4-ct-n" id="foundCount">0</div><div class="s4-ct-l">/ 10</div></div>
+          <div class="s4-prog"><div class="s4-pf" id="s4PF" style="width:0%"></div></div>
+        </div>
+        <div class="s4-items" id="paramItemsList"></div>
+        <div class="s4-foot"><button class="btn btn-t" id="params4Btn" onclick="goToStage(5)" style="width:100%;font-size:.76rem" disabled>Collect Data →</button></div>
+      </div>
+    </div>
+    <div class="bnav"><button class="bb" onclick="goToStage(3)">← Theory</button><div class="bnav-c"><strong>Step 4 of 10</strong>Find the Factors</div><button class="bb p" id="params4BtnNav" onclick="goToStage(5)" disabled>Data →</button></div>
+  </div>
+
+  <!-- S5 DATA COLLECTION -->
+  <div class="stage-panel" id="stage-5">
+    <div class="s5-body">
+      <div class="s5-main">
+        <div class="s5-left">
+          <div style="padding:10px 10px 6px;flex-shrink:0">
+            <div style="font-size:.64rem;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;margin-bottom:4px;font-family:'Inter',sans-serif">Set Parameters</div>
+            <div style="font-size:.72rem;color:var(--text2);font-family:'Inter',sans-serif;line-height:1.5;background:var(--surface2);border:1px solid var(--bdr);border-radius:7px;padding:7px 10px;">Pick quick presets or fine-tune with <strong style="color:var(--teal)">−</strong>/<strong style="color:var(--teal)">+</strong>, then hit <strong style="color:var(--teal)">Add Point</strong> to teach the AI.</div>
+          </div>
+          <div class="s5-sliders-area" id="dataSliders"></div>
+          <div class="s5-add-row">
+            <button class="btn btn-t" onclick="addDataPoint()">+ Add Point</button>
+            <button class="btn btn-g" onclick="addBulkData(50)">+50 Auto</button>
+          </div>
+        </div>
+        <div class="s5-right">
+          <div class="s5-stats-row">
+            <div class="s5-stat"><div class="s5-sv"><span id="totalPoints">0</span><span class="s5-new-flash" id="aiFlash">+AI</span></div><div class="s5-sl">Total</div></div>
+            <div class="s5-stat"><div class="s5-sv"><span id="userPoints">0</span><span class="s5-new-flash" id="userFlash">+1</span></div><div class="s5-sl">Yours</div></div>
+            <div class="s5-stat"><div class="s5-sv" style="color:var(--green);font-size:.85rem">✓</div><div class="s5-sl">Ready</div></div>
+          </div>
+          <div class="s5-tbl-wrap">
+            <div class="s5-tbl-scroll"><table class="s5-tbl"><thead id="dTblHead"></thead><tbody id="dTblBody"></tbody></table></div>
+            <div class="s5-tbl-foot">
+              <span class="s5-tbl-ct" id="s5TblCt">Recent entries</span>
+              <button style="background:transparent;border:1px solid var(--bdr2);color:var(--text2);font-size:.6rem;padding:2px 7px;border-radius:4px;cursor:pointer;font-family:var(--f)" onclick="toggleFullTable()">All ↕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bnav"><button class="bb" onclick="goToStage(4)">← Params</button><div class="bnav-c"><strong>Step 5 of 10</strong>Data Collection</div><button class="bb p" onclick="goToStage(6)">Choose AI →</button></div>
+  </div>
+
+  <!-- S6 CHOOSE MODEL -->
+  <div class="stage-panel" id="stage-6">
+    <div class="s6-body fade">
+      <div><div class="s6-h2">Choose Your Approach</div><div class="s6-sub">Pick how the AI learns. You won't see the model name until you choose.</div></div>
+      <div class="s6-ms" id="s6MS">Which path calls to you? <strong>Each discovers something different</strong> from the same data.</div>
+      <div class="s6-cards">
+        <div class="mc" onclick="selectModel('linear',this)"><div class="mc-ico">📏</div><div class="mc-an">The Ruler</div><div class="mc-desc">Simplest straight line. Transparent, fast — misses curves.</div><div class="mc-hint">Best for roughly linear data</div><div class="mc-nr">LINEAR REGRESSION</div></div>
+        <div class="mc" style="position:relative" onclick="selectModel('polynomial',this)"><div class="mc-rec">⭐ RECOMMENDED</div><div class="mc-ico">🌊</div><div class="mc-an">The Curve Finder</div><div class="mc-desc">Bends to follow curves. Perfect for sin²(θ) relationships.</div><div class="mc-hint">Best for curved data</div><div class="mc-nr">POLYNOMIAL REGRESSION</div></div>
+        <div class="mc" onclick="selectModel('neural',this)"><div class="mc-ico">🧠</div><div class="mc-an">The Black Box</div><div class="mc-desc">Finds any pattern — no equations needed. Powerful, mysterious.</div><div class="mc-hint">Best for complex patterns</div><div class="mc-nr">NEURAL NETWORK</div></div>
+      </div>
+      <div class="mresp" id="mascotResp"></div>
+    </div>
+    <div class="bnav"><button class="bb" onclick="goToStage(5)">← Data</button><div class="bnav-c"><strong>Step 6 of 10</strong>Choose Approach</div><button class="bb p" id="modelNextBtn" onclick="goToStage(7)" disabled>Train →</button></div>
+  </div>
+
+  <!-- S7 TRAINING -->
+  <div class="stage-panel" id="stage-7">
+    <div class="s7-body">
+      <div class="s7-left">
+        <div class="s7-mhdr" id="s7MHdr"></div>
+        <div class="s7-panel" style="display:flex;flex-direction:column;gap:7px">
+          <div class="s7-ptitle">📉 TRAINING GRAPH — How the AI learns over time</div>
+          <div style="position:relative">
+            <canvas id="epochCanvas" class="epoch-cv"></canvas>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.58rem;color:var(--text3);font-family:'Inter',sans-serif;padding:0 2px">
+            <span>Start</span><span style="color:var(--text2);font-weight:600">← Lower error = better AI →</span><span>End</span>
+          </div>
+          <div class="tprog"><div class="tprog-f" id="tProgF" style="width:0%"></div></div>
+          <div style="font-size:.58rem;color:var(--text3);margin-top:2px;font-family:'Inter',sans-serif" id="trainStatusNote">Training on real physics data — this may take a moment…</div>
+        </div>
+        <div class="train-log" id="trainLog"></div>
+        <div class="derived-f-wrap">
+          <div class="derived-f-lbl">AI Formula — What the AI has learned</div>
+          <div class="derived-f-eq" id="derivedF">Training in progress…</div>
+          <div class="derived-f-note" id="derivedFNote" style="display:none"></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-g" id="viewOMBtn" onclick="viewOtherModels()" style="font-size:.68rem;padding:6px 11px" disabled><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="vertical-align:middle;margin-right:4px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Compare Models</button>
+          <button class="btn btn-t" id="trainNextBtn" onclick="goToStage(8)" disabled style="flex:1;font-size:.76rem">Simulate →</button>
+        </div>
+      </div>
+      <div class="s7-right">
+        <div class="s7-panel" id="guessGamePanel">
+          <div class="s7-ptitle"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>CHALLENGE — Rank the Factors!</div>
+          <div class="guess-panel">
+            <div class="guess-title">🤔 Before the AI reveals… what do YOU think?</div>
+            <div class="guess-sub">Drag the top 3 factors into the podium boxes — most important first. Can you beat the AI?</div>
+            <div style="font-size:.6rem;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;margin-bottom:2px">Your Top 3 Picks (drag here):</div>
+            <div class="drag-zone" id="dragZone">
+              <div class="drag-slot" id="slot0" ondragover="event.preventDefault();this.classList.add('drop-over')" ondragleave="this.classList.remove('drop-over')" ondrop="dropToSlot(event,0)"><span class="slot-rank">1</span><span class="slot-label" style="font-size:.64rem;color:var(--text3)">Most important factor…</span></div>
+              <div class="drag-slot" id="slot1" ondragover="event.preventDefault();this.classList.add('drop-over')" ondragleave="this.classList.remove('drop-over')" ondrop="dropToSlot(event,1)"><span class="slot-rank">2</span><span class="slot-label" style="font-size:.64rem;color:var(--text3)">Second most important…</span></div>
+              <div class="drag-slot" id="slot2" ondragover="event.preventDefault();this.classList.add('drop-over')" ondragleave="this.classList.remove('drop-over')" ondrop="dropToSlot(event,2)"><span class="slot-rank">3</span><span class="slot-label" style="font-size:.64rem;color:var(--text3)">Third most important…</span></div>
+            </div>
+            <div style="font-size:.6rem;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;margin-bottom:2px">Pick from:</div>
+            <div class="param-chips" id="paramChips"></div>
+            <div class="guess-result" id="guessResult"></div>
+            <div class="guess-btns">
+              <button class="btn btn-p" id="guessSubmitBtn" onclick="submitGuess()" style="font-size:.7rem;padding:7px 14px" disabled>Check My Answer 🎲</button>
+              <button class="btn btn-g" id="guessClearBtn" onclick="clearGuess()" style="font-size:.7rem;padding:7px 10px">↺ Reset</button>
+            </div>
+          </div>
+        </div>
+        <div class="s7-panel" id="rankRevealPanel" style="display:none">
+          <div class="s7-ptitle"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="vertical-align:middle;margin-right:4px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>AI Results — Feature Importance</div>
+          <div style="font-size:.66rem;color:var(--text2);margin-bottom:8px;line-height:1.5">How much each factor actually affects the range (ranked by the AI):</div>
+          <div class="rank-reveal" id="rankReveal"></div>
+        </div>
+        <div class="s7-panel" id="aiDiscPanel" style="display:none">
+          <div class="s7-ptitle"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="vertical-align:middle;margin-right:4px"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/></svg>What the AI Discovered</div>
+          <div class="s7-disc" id="aiDisc"></div>
+        </div>
+      </div>
+    </div>
+    <div class="bnav"><button class="bb" onclick="goToStage(6)">← Model</button><div class="bnav-c"><strong>Step 7 of 10</strong>AI Training</div><button class="bb p" id="trainNextBtnNav" onclick="goToStage(8)" disabled>Simulate →</button></div>
+  </div>
+
+  <!-- S8 AI SIM -->
+  <div class="stage-panel" id="stage-8">
+    <div class="s8-body">
+      <div class="sim-pend" style="position:relative">
+        <canvas id="simAICanvas" style="border-radius:12px;width:100%;flex:1"></canvas>
+        <div class="goal-flash" id="aiGoalFlash">
+          <div class="goal-flash-inner"><div class="gf-emoji">🎉⚽🎉</div><div class="gf-title">GOAL!</div><div class="gf-sub">The ball hit the back of the net!</div></div>
+        </div>
+        <div class="src-card"><div class="src-lbl">AI Predicted Range</div><div class="src-val" id="aiRange">—</div><div class="src-unit">metres</div></div>
+        <div style="font-size:.6rem;color:var(--text3);font-family:var(--m)" id="aiModelLabel">—</div>
+      </div>
+      <div class="sim-ctrl">
+        <div class="sim-ctrl-t">Parameters</div>
+        <div id="simSliders"></div>
+        <button class="btn btn-t" onclick="runAISim()" style="width:100%;flex-shrink:0;margin-top:4px">▶ Simulate</button>
+        <div class="sim-fbox"><div class="sfc-lbl">AI Formula</div><div class="sfc-f" id="aiFormulaDisp">—</div></div>
+      </div>
+    </div>
+    <div class="bnav"><button class="bb" onclick="goToStage(7)">← Training</button><div class="bnav-c"><strong>Step 8 of 10</strong>AI Simulation</div><button class="bb p" onclick="goToStage(9)">Textbook →</button></div>
+  </div>
+
+  <!-- S9 TB SIM -->
+  <div class="stage-panel" id="stage-9">
+    <div class="s9-body">
+      <div class="tb-pend" style="position:relative">
+        <canvas id="simTBCanvas" style="border-radius:12px;width:100%;flex:1"></canvas>
+        <div class="goal-flash" id="tbGoalFlash">
+          <div class="goal-flash-inner"><div class="gf-emoji">🎉⚽🎉</div><div class="gf-title">GOAL!</div><div class="gf-sub">The ball hit the back of the net!</div></div>
+        </div>
+        <div class="src-card"><div class="src-lbl">Textbook Range</div><div class="src-val cc-tb" id="tbRange">—</div><div class="src-unit">metres</div></div>
+        <div style="font-size:.62rem;color:var(--amber);font-family:var(--m);font-weight:600">R = v₀²·sin(2θ)/g</div>
+      </div>
+      <div class="tb-ctrl">
+        <div class="tb-fh"><div class="f-lbl">Textbook Formula</div><div class="f-eq">R = v₀²·sin(2θ) / g</div><div class="f-note">No air resistance · flat ground</div></div>
+
+        <div class="tb-section-lbl">Gravity — Pick a World</div>
+        <div class="tb-world-row" id="tbWorldRow">
+          <div class="tb-world" data-g="1.62" onclick="tbPickWorld(this)">
+            <div class="tb-world-orb" style="background:radial-gradient(circle at 35% 30%, #c8c8c8, #888)"></div>
+            <div class="tb-world-name">Moon</div><div class="tb-world-g">1.6 m/s²</div>
+          </div>
+          <div class="tb-world" data-g="3.72" onclick="tbPickWorld(this)">
+            <div class="tb-world-orb" style="background:radial-gradient(circle at 35% 30%, #c97a5e, #8c3a2a)"></div>
+            <div class="tb-world-name">Mars</div><div class="tb-world-g">3.7 m/s²</div>
+          </div>
+          <div class="tb-world active" data-g="9.81" onclick="tbPickWorld(this)">
+            <div class="tb-world-orb" style="background:radial-gradient(circle at 35% 30%, #4ab5ff, #1a6fc4)"></div>
+            <div class="tb-world-name">Earth</div><div class="tb-world-g">9.8 m/s²</div>
+          </div>
+          <div class="tb-world" data-g="24.8" onclick="tbPickWorld(this)">
+            <div class="tb-world-orb" style="background:radial-gradient(circle at 35% 30%, #f5c842, #c47a10)"></div>
+            <div class="tb-world-name">Jupiter</div><div class="tb-world-g">24.8 m/s²</div>
+          </div>
+        </div>
+        <div class="tb-custom-g-row">
+          <span style="font-size:.6rem;color:var(--text3);font-family:'Inter',sans-serif">Custom g (m/s²):</span>
+          <div class="tb-custom-stepper">
+            <button class="tb-step-btn" onclick="tbStepG(-0.1)">−</button>
+            <span id="tbGv" class="tb-step-val">9.81</span>
+            <button class="tb-step-btn" onclick="tbStepG(0.1)">+</button>
+          </div>
+        </div>
+
+        <div class="tb-section-lbl">Launch Angle (θ)</div>
+        <div class="tb-angle-row" id="tbAngleRow">
+          <div class="tb-angle-btn" data-a="15" onclick="tbPickAngle(this)">
+            <svg class="tb-angle-icon" viewBox="0 0 40 36" fill="none"><line x1="4" y1="32" x2="36" y2="32" stroke="currentColor" stroke-width="1.5"/><line x1="4" y1="32" x2="12" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 32 A8 8 0 0 1 9.5 26" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+            <div class="tb-angle-label">Shallow</div><div class="tb-angle-deg">15°</div>
+          </div>
+          <div class="tb-angle-btn active" data-a="45" onclick="tbPickAngle(this)">
+            <svg class="tb-angle-icon" viewBox="0 0 40 36" fill="none"><line x1="4" y1="32" x2="36" y2="32" stroke="currentColor" stroke-width="1.5"/><line x1="4" y1="32" x2="18" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 32 A12 12 0 0 1 13.5 22" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+            <div class="tb-angle-label">Optimal</div><div class="tb-angle-deg">45°</div>
+          </div>
+          <div class="tb-angle-btn" data-a="60" onclick="tbPickAngle(this)">
+            <svg class="tb-angle-icon" viewBox="0 0 40 36" fill="none"><line x1="4" y1="32" x2="36" y2="32" stroke="currentColor" stroke-width="1.5"/><line x1="4" y1="32" x2="10" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 32 A14 14 0 0 1 9.5 18" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+            <div class="tb-angle-label">Steep</div><div class="tb-angle-deg">60°</div>
+          </div>
+          <div class="tb-angle-btn" data-a="75" onclick="tbPickAngle(this)">
+            <svg class="tb-angle-icon" viewBox="0 0 40 36" fill="none"><line x1="4" y1="32" x2="36" y2="32" stroke="currentColor" stroke-width="1.5"/><line x1="4" y1="32" x2="5.8" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 32 A14 14 0 0 1 7 18" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+            <div class="tb-angle-label">High Arc</div><div class="tb-angle-deg">75°</div>
+          </div>
+        </div>
+        <div class="tb-custom-g-row">
+          <span style="font-size:.6rem;color:var(--text3);font-family:'Inter',sans-serif">Custom angle (°):</span>
+          <div class="tb-custom-stepper">
+            <button class="tb-step-btn" onclick="tbStepA(-1)">−</button>
+            <span id="tbAngleVal" class="tb-step-val">45°</span>
+            <button class="tb-step-btn" onclick="tbStepA(1)">+</button>
+          </div>
+        </div>
+
+        <div class="tb-section-lbl">Initial Speed</div>
+        <div class="tb-custom-g-row">
+          <span style="font-size:.6rem;color:var(--text3);font-family:'Inter',sans-serif">Speed v₀ (m/s):</span>
+          <div class="tb-custom-stepper">
+            <button class="tb-step-btn" onclick="tbStepV(-1)">−</button>
+            <span id="tbVv" class="tb-step-val">20 m/s</span>
+            <button class="tb-step-btn" onclick="tbStepV(1)">+</button>
+          </div>
+        </div>
+
+        <button class="btn btn-a" onclick="runTBSim()" style="width:100%;margin-top:2px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:5px"><polygon points="5,3 19,12 5,21"/></svg>
+          Run Simulation
+        </button>
+        <div class="cmp-row">
+          <div class="cmp-cell"><div class="cc-lbl">AI Range</div><div class="cc-val cc-ai" id="cmpAI">—</div></div>
+          <div class="cmp-cell"><div class="cc-lbl">Textbook Range</div><div class="cc-val cc-tb" id="cmpTB">—</div></div>
+        </div>
+        <div class="diff-box" id="diffBox" style="display:none"><span id="diffTxt"></span></div>
+      </div>
+    </div>
+    <div class="bnav"><button class="bb" onclick="goToStage(8)">← AI Sim</button><div class="bnav-c"><strong>Step 9 of 10</strong>Textbook Sim</div><button class="bb p" onclick="goToStage(10)">Notebook →</button></div>
+  </div>
+
+  <!-- S10 NOTEBOOK -->
+  <div class="stage-panel" id="stage-10">
+    <div class="s10-body">
+      <div class="book-scene">
+        <div class="book-wrap" id="bookWrap">
+          <div class="bk-spread" id="bkSpread">
+            <div class="bk-left">
+              <div id="bkL"></div>
+            </div>
+            <div class="bk-right">
+              <div id="bkR"></div>
+            </div>
+          </div>
+          <!-- Animated flip page -->
+          <div class="bk-flip" id="bkFlip">
+            <div class="bk-flip-front" id="bkFF"><div id="bkFFContent"></div></div>
+            <div class="bk-flip-back" id="bkFB"><div id="bkFBContent"></div></div>
+          </div>
+          <div class="bk-drag-hint">Drag page edge or use buttons to turn</div>
+        </div>
+      </div>
+      <div class="book-nav">
+        <button class="bn2" id="prevPgBtn" onclick="prevPage()" disabled>← Prev</button>
+        <span class="bk-pg-ct" id="bkPgCt">Page 1 of 5</span>
+        <button class="bn2" id="nextPgBtn" onclick="nextPage()">Next →</button>
+      </div>
+      <div class="s10-cta">
+        <h3>Experiment Complete!</h3>
+        <p>Test your knowledge and earn your badge.</p>
+        <div class="s10-btns">
+          <button class="btn btn-p" onclick="openQuizModal()">Take Quiz</button>
+          <button class="btn btn-a" id="badgeCTA" onclick="showBadge()" style="display:none">🏅 Get Badge</button>
+        </div>
+        <div id="quizPreview" style="display:none;font-family:var(--m);font-size:.7rem;color:var(--teal);background:var(--teal-d);border:1px solid var(--teal-b);border-radius:7px;padding:6px 12px;margin-top:6px"></div>
+      </div>
+    </div>
+    <div class="bnav"><button class="bb" onclick="goToStage(9)">← TB Sim</button><div class="bnav-c"><strong>Step 10 of 10</strong>Notebook</div><div style="width:74px"></div></div>
+  </div>
+
+
+  <!-- ══════ S11 DESCRIPTIVE ANALYSIS ══════ -->
+  <div id="stage-11" class="stage-panel" style="align-items:center;overflow-y:auto;padding:16px 14px 32px">
+    <div class="s11-body" style="width:100%;max-width:480px;display:flex;flex-direction:column;gap:14px">
+
+      <!-- Header -->
+      <div style="text-align:center;padding:8px 0 4px">
+        <div style="font-size:1.6rem;margin-bottom:6px">🧪</div>
+        <div style="font-size:1rem;font-weight:800;color:var(--teal)">Reflect & Explain</div>
+        <div style="font-size:.75rem;color:var(--text2);margin-top:4px">Answer in your own words — type or speak</div>
+      </div>
+
+      <!-- Q1 -->
+      <div class="da-card" id="da-q1">
+        <div class="da-qnum">Question 1 of 2</div>
+        <div class="da-qtxt">In the experiment, what happened to the ball's horizontal speed as it flew through the air? Why do you think that happened?</div>
+        <div class="da-input-wrap">
+          <textarea class="da-ta" id="da-ans1" placeholder="Type your answer here..." rows="4"></textarea>
+          <button class="da-mic" id="da-mic1" onclick="startSpeech(1)" title="Speak answer">🎙️</button>
+        </div>
+        <div class="da-mic-status" id="da-mic-status1"></div>
+      </div>
+
+      <!-- Q2 -->
+      <div class="da-card" id="da-q2">
+        <div class="da-qnum">Question 2 of 2</div>
+        <div class="da-qtxt">If you kicked the ball at a steeper angle, what would change — the range, the height, or both? Explain using what you observed.</div>
+        <div class="da-input-wrap">
+          <textarea class="da-ta" id="da-ans2" placeholder="Type your answer here..." rows="4"></textarea>
+          <button class="da-mic" id="da-mic2" onclick="startSpeech(2)" title="Speak answer">🎙️</button>
+        </div>
+        <div class="da-mic-status" id="da-mic-status2"></div>
+      </div>
+
+      <!-- Submit -->
+      <button class="btn btn-t" id="da-submit-btn" onclick="submitDescriptive()" style="width:100%;padding:12px;font-size:.85rem">
+        ✨ Analyse My Answers
+      </button>
+
+      <!-- Mascot Feedback -->
+      <div id="da-mascot-wrap" style="display:none">
+        <div class="da-mascot-bubble">
+          <div class="da-mascot-face" id="da-mascot-face">🤖</div>
+          <div class="da-mascot-speech">
+            <div class="da-mascot-name">Lab Bot</div>
+            <div id="da-mascot-text" class="da-mascot-msg">Analysing your answers...</div>
+          </div>
+        </div>
+        <div id="da-download-wrap" style="display:none;margin-top:14px">
+          <div style="font-size:.75rem;color:var(--text2);margin-bottom:10px;text-align:center">✅ Your full analysis is ready!</div>
+          <button class="btn btn-p" onclick="viewDAReport()" style="width:100%;padding:11px;margin-bottom:8px">
+            📋 View Full Report
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="da-loading" style="display:none;text-align:center;padding:20px">
+        <div class="da-spinner"></div>
+        <div style="font-size:.75rem;color:var(--text2);margin-top:10px">Lab Bot is reading your answers...</div>
+      </div>
+
+    </div>
+  </div><!-- end stage-11 -->
+
+</div><!-- end screen-lab -->
+
+<!-- REPORT MODAL -->
+<div class="rpt-ov hidden" id="reportModal">
+  <div class="rpt-topbar">
+    <div class="rpt-title">📋 Analysis Report</div>
+    <div class="rpt-actions">
+      <button class="btn btn-p" onclick="downloadDAReport()" style="font-size:.72rem;padding:6px 14px">⬇ Save PDF</button>
+      <button class="btn btn-g" onclick="closeReport()" style="font-size:.72rem;padding:6px 14px">✕ Close</button>
+    </div>
+  </div>
+  <div class="rpt-body">
+    <div class="rpt-inner">
+      <div class="rpt-card" style="margin-bottom:18px;background:linear-gradient(135deg,rgba(0,224,150,.07),rgba(124,95,255,.07));border-color:rgba(0,224,150,.18)">
+        <div style="font-size:1.1rem;font-weight:800;color:var(--teal);margin-bottom:3px">⚽ Projectile Motion</div>
+        <div style="font-size:.75rem;color:var(--text2)">Student: <strong id="rpt-student" style="color:var(--text)"></strong> &nbsp;·&nbsp; <span id="rpt-date"></span></div>
+      </div>
+      <div class="rpt-card" style="display:flex;gap:28px;align-items:flex-start">
+        <div><div class="rpt-label">Score</div><div class="rpt-score-big" id="rpt-score"></div></div>
+        <div style="margin-top:4px"><div class="rpt-label">Level</div><div class="rpt-level" id="rpt-level"></div></div>
+      </div>
+      <div class="rpt-card">
+        <div class="rpt-label">Q1 — Horizontal Speed</div>
+        <div class="rpt-ans" id="rpt-q1-ans"></div>
+        <p class="rpt-body-txt" id="rpt-q1-body"></p>
+      </div>
+      <div class="rpt-card">
+        <div class="rpt-label">Q2 — Angle &amp; Range</div>
+        <div class="rpt-ans" id="rpt-q2-ans"></div>
+        <p class="rpt-body-txt" id="rpt-q2-body"></p>
+      </div>
+      <div class="rpt-card">
+        <div class="rpt-label">Concepts Demonstrated</div>
+        <div style="margin-top:6px" id="rpt-concepts"></div>
+      </div>
+      <div class="rpt-card">
+        <div class="rpt-label">What to Study Next</div>
+        <p class="rpt-body-txt" id="rpt-study"></p>
+      </div>
+      <div class="rpt-card rpt-enc">
+        <div class="rpt-label">Encouragement</div>
+        <p class="rpt-body-txt" id="rpt-enc-body"></p>
+      </div>
+      <div class="rpt-footer">Generated by DiscoveryLab </div>
+    </div>
+  </div>
+</div>
+
+<!-- PARAM MODAL -->
+<div class="pm-ov hidden" id="paramModal">
+  <div class="pm-box">
+    <div class="pm-ico" id="pmIco"></div>
+    <div class="pm-badge">Parameter Discovered!</div>
+    <div class="pm-name" id="pmName">Launch Angle</div>
+    <div class="pm-sym" id="pmSym">θ (°)</div>
+    <div class="pm-desc" id="pmDesc"></div>
+    <button class="pm-btn" onclick="closeParamModal()">Got it ✓</button>
+  </div>
+</div>
+
+<!-- QUIZ MODAL -->
+<div class="modal-ov hidden" id="quizModal">
+  <div class="quiz-box">
+    <div class="quiz-hdr">
+      <div><div style="font-size:.57rem;font-weight:700;letter-spacing:.1em;color:var(--teal);margin-bottom:2px">KNOWLEDGE CHECK</div><div style="font-size:.85rem;font-weight:700">Projectile Motion Quiz</div></div>
+      <div style="display:flex;align-items:center;gap:9px"><div id="duoLives" style="display:flex;gap:3px"></div><button class="qclose" onclick="closeQuizModal()">✕</button></div>
+    </div>
+    <div class="quiz-pb-w"><div class="quiz-pb" id="quizPB" style="width:0%"></div></div>
+    <div class="quiz-body" id="quizBody"></div>
+    <div class="quiz-foot"><span class="qscore" id="quizScore"></span><button class="btn btn-p" id="quizNextBtn" onclick="duoNext()" style="display:none;font-size:.76rem">Next →</button></div>
+  </div>
+</div>
+
+<!-- BADGE MODAL -->
+<div class="badge-ov hidden" id="badgeModal">
+  <div class="badge-in">
+    <button class="badge-close" onclick="closeBadge()">✕</button>
+    <div class="badge-ttl">🥉 ACHIEVEMENT UNLOCKED</div>
+    <div class="badge-card" id="badgeCard"></div>
+    <div class="badge-btns">
+      <button class="btn btn-a" onclick="downloadBadge()">⬇ Download</button>
+      <button class="btn btn-g" onclick="closeBadge()">Close</button>
+    </div>
+    <canvas id="badgeCanvas" width="440" height="360" style="display:none"></canvas>
+    <button class="btn btn-p" onclick="closeBadge();goToStage(11)" style="margin-top:10px;width:100%">
+  ✍️ Go to Descriptive Analysis →
+</button>
+  </div>
+</div>
+<div class="flip-ov" id="flipOv"></div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// AUDIO
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let _actx=null;
+function ac(){if(!_actx)_actx=new(window.AudioContext||window.webkitAudioContext)();return _actx;}
+// Warm up AudioContext on any first interaction so there's no delay
+(function(){
+  function warmAC(){try{ac();}catch(e){}document.removeEventListener('click',warmAC);document.removeEventListener('touchstart',warmAC);}
+  document.addEventListener('click',warmAC,{passive:true});
+  document.addEventListener('touchstart',warmAC,{passive:true});
+})();
+function playTone(freq,dur,type='sine',vol=.06,attack=.01,decay=.04){
+  try{const ctx=ac(),now=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();
+  o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(vol,now+attack);g.gain.exponentialRampToValueAtTime(.001,now+dur);
+  o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+dur+.05);}catch(e){}
+}
+function playFlip(){try{const ctx=ac(),now=ctx.currentTime,buf=ctx.createBuffer(1,ctx.sampleRate*.07,ctx.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++){const t=i/ctx.sampleRate;d[i]=Math.sin(2*Math.PI*(1400-t*6000)*t)*Math.exp(-t*35)*0.12;}const s=ctx.createBufferSource();s.buffer=buf;const g=ctx.createGain();g.gain.value=1;s.connect(g);g.connect(ctx.destination);s.start();}catch(e){}}
+function playPop(){playTone(700,.15,'sine',.08,.005,.1);setTimeout(()=>playTone(400,.1,'sine',.04,.005,.08),60);}
+function playChime(){[523,659,784].forEach((f,i)=>setTimeout(()=>playTone(f,.35,'sine',.07,.02,.3),i*90));}
+function playAdd(){playTone(523,.12,'triangle',.05,.005,.1);}
+function playGoal(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,.25,'sine',.1),i*80));}
+function playKick(){try{const ctx=ac(),now=ctx.currentTime,buf=ctx.createBuffer(1,ctx.sampleRate*.12,ctx.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++){const t=i/ctx.sampleRate;d[i]=(Math.random()*2-1)*Math.exp(-t*40)*0.35+Math.sin(2*Math.PI*120*t)*Math.exp(-t*25)*0.25;}const s=ctx.createBufferSource();s.buffer=buf;const g=ctx.createGain();g.gain.value=1;s.connect(g);g.connect(ctx.destination);s.start();}catch(e){}}
+function playPageTurn(){try{const ctx=ac(),now=ctx.currentTime,buf=ctx.createBuffer(1,ctx.sampleRate*.22,ctx.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++){const t=i/ctx.sampleRate;const env=Math.exp(-t*10)*0.18+Math.exp(-t*30)*0.08;d[i]=(Math.random()*2-1)*env*Math.sin(2*Math.PI*(800+t*-2000)*t);}const s=ctx.createBufferSource();s.buffer=buf;const g2=ctx.createGain();g2.gain.value=1.4;s.connect(g2);g2.connect(ctx.destination);s.start();}catch(e){}}
+// Badge pop — ascending arp
+function playBadge(){[330,440,554,659,880].forEach((f,i)=>setTimeout(()=>playTone(f,.3,'sine',.06,.01,.28),i*80));}
+// Soft tick for animation swing
+let _lastTick=0;
+function playTick(now){if(now-_lastTick<600)return;_lastTick=now;try{const ctx=ac(),t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(200,t);o.frequency.exponentialRampToValueAtTime(80,t+.08);g.gain.setValueAtTime(.04,t);g.gain.exponentialRampToValueAtTime(.001,t+.1);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.12);}catch(e){}}
+// Stage navigation swoosh
+function playNav(){try{const ctx=ac(),now=ctx.currentTime;const o1=ctx.createOscillator(),o2=ctx.createOscillator(),g=ctx.createGain();o1.type='sine';o1.frequency.setValueAtTime(520,now);o1.frequency.linearRampToValueAtTime(660,now+0.12);o2.type='sine';o2.frequency.setValueAtTime(660,now+0.10);o2.frequency.linearRampToValueAtTime(800,now+0.22);g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(0.07,now+0.02);g.gain.setValueAtTime(0.07,now+0.10);g.gain.linearRampToValueAtTime(0,now+0.22);o1.connect(g);o2.connect(g);g.connect(ctx.destination);o1.start(now);o1.stop(now+0.13);o2.start(now+0.09);o2.stop(now+0.24);}catch(e){}}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PARAMS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const PARAMS=[
+  {symbol:'θ',name:'Launch Angle',unit:'°',min:1,max:89,step:1,default:45,icon:'📐',desc:'The angle above horizontal at which the projectile is launched. At 45° the range is maximum on flat ground.'},
+  {symbol:'v0',name:'Initial Speed',unit:'m/s',min:1,max:80,step:1,default:20,icon:'🚀',desc:'How fast the projectile leaves the launcher. Higher speed means greater range and height.'},
+  {symbol:'g',name:'Gravity',unit:'m/s²',min:0.1,max:30,step:0.1,default:9.81,icon:'🌍',desc:'Gravitational acceleration pulling the projectile down. On Earth it is 9.81 m/s², on the Moon just 1.62 m/s².'},
+  {symbol:'h0',name:'Launch Height',unit:'m',min:0,max:20,step:0.5,default:0,icon:'⬆',desc:'Height above the ground at which the projectile starts. A taller launch increases total range.'},
+  {symbol:'m',name:'Mass',unit:'kg',min:0.05,max:5,step:0.05,default:0.43,icon:'⚖',desc:'Mass of the projectile (e.g., a football is 0.43 kg). In ideal projectile motion mass does not affect range.'},
+  {symbol:'Cd',name:'Drag Coefficient',unit:'',min:0,max:1.5,step:0.05,default:0.2,icon:'💨',desc:'Air resistance shape factor. A smooth sphere has Cd ≈ 0.2. Higher Cd reduces range significantly.'},
+  {symbol:'ρ',name:'Air Density',unit:'kg/m³',min:0,max:1.5,step:0.05,default:1.2,icon:'🌬',desc:'Density of the surrounding air. Higher density means more drag. At altitude air is thinner.'},
+  {symbol:'A',name:'Cross-section Area',unit:'m²',min:0.001,max:0.1,step:0.001,default:0.038,icon:'⭕',desc:'Frontal area of the projectile (πr²). A larger ball has more drag. Standard football ≈ 0.038 m².'},
+  {symbol:'ω',name:'Spin (Magnus)',unit:'rpm',min:0,max:3000,step:100,default:0,icon:'🌀',desc:'Backspin or topspin causes the Magnus effect, curving the ball\'s path. At 0 rpm there is no spin effect.'},
+  {symbol:'vw',name:'Wind Speed',unit:'m/s',min:-15,max:15,step:1,default:0,icon:'🌪',desc:'Horizontal wind speed. Positive is headwind (reduces range), negative is tailwind (increases range).'},
+];
+
+const STEPPER_PRESETS={
+  θ:[{l:'30°',v:30},{l:'45°',v:45},{l:'60°',v:60}],
+  v0:[{l:'10 m/s',v:10},{l:'20 m/s',v:20},{l:'40 m/s',v:40}],
+  g:[{l:'Moon',v:1.62},{l:'Earth',v:9.81},{l:'Jupiter',v:24.8}],
+  h0:[{l:'0m',v:0},{l:'1m',v:1},{l:'5m',v:5}],
+  m:[{l:'Light',v:0.1},{l:'Football',v:0.43},{l:'Heavy',v:2}],
+  Cd:[{l:'Smooth',v:0.1},{l:'Ball',v:0.2},{l:'Rough',v:0.6}],
+  ρ:[{l:'High Alt',v:0.9},{l:'Sea',v:1.2},{l:'Dense',v:1.4}],
+  A:[{l:'Small',v:0.01},{l:'Football',v:0.038},{l:'Large',v:0.08}],
+  ω:[{l:'No spin',v:0},{l:'Slow',v:500},{l:'Fast',v:2000}],
+  vw:[{l:'Tailwind',v:-5},{l:'Still',v:0},{l:'Headwind',v:5}],
+};
+
+const BCOLS=['#00e096','#7c5fff','#f5a623','#4ab5ff','#f05454','#36f0a0','#dd66ff','#ffd060','#66c8ff','#ff80b3'];
+
+const PARAM_SVGS={
+  θ:`<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="3" y1="24" x2="25" y2="24" stroke="#00e096" stroke-width="1.8" stroke-linecap="round"/><line x1="3" y1="24" x2="14" y2="6" stroke="#00e096" stroke-width="2" stroke-linecap="round"/><path d="M7 24 A7 7 0 0 1 10 17.5" stroke="#f5a623" stroke-width="1.6" fill="none" stroke-linecap="round"/><text x="11" y="22" font-size="7" fill="#f5a623" font-family="monospace">θ</text></svg>`,
+  v0:`<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 20 L12 8 L20 20" stroke="#00e096" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="20" y1="20" x2="26" y2="14" stroke="#00e096" stroke-width="1.8" stroke-linecap="round"/><line x1="22" y1="12" x2="26" y2="14" stroke="#00e096" stroke-width="1.8" stroke-linecap="round"/><line x1="24" y1="16" x2="26" y2="14" stroke="#00e096" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+  g:`<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="14" cy="14" r="10" stroke="#4ab5ff" stroke-width="1.8"/><ellipse cx="14" cy="14" rx="4" ry="10" stroke="#4ab5ff" stroke-width="1.2" stroke-dasharray="3 2"/><line x1="4" y1="14" x2="24" y2="14" stroke="#4ab5ff" stroke-width="1.2"/><line x1="14" y1="18" x2="14" y2="26" stroke="#f5a623" stroke-width="2" stroke-linecap="round" marker-end="url(#arr)"/><polygon points="11,23 14,28 17,23" fill="#f5a623"/></svg>`,
+  h0:`<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="4" y1="24" x2="24" y2="24" stroke="#00e096" stroke-width="1.6" stroke-linecap="round"/><line x1="14" y1="24" x2="14" y2="6" stroke="#00e096" stroke-width="2" stroke-linecap="round"/><polygon points="11,9 14,4 17,9" fill="#00e096"/><line x1="8" y1="14" x2="11" y2="14" stroke="#00e096" stroke-width="1.2"/><line x1="17" y1="14" x2="20" y2="14" stroke="#00e096" stroke-width="1.2"/></svg>`,
+  m:`<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 8 L20 8 L22 22 L6 22 Z" stroke="#f5a623" stroke-width="1.8" fill="none" stroke-linejoin="round"/><line x1="5" y1="8" x2="23" y2="8" stroke="#f5a623" stroke-width="2" stroke-linecap="round"/><path d="M11 8 Q14 4 17 8" stroke="#f5a623" stroke-width="1.6" fill="none"/></svg>`,
+  Cd:`<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="14" cy="16" r="7" stroke="#7c5fff" stroke-width="1.8"/><path d="M2 10 Q7 8 12 10 Q17 12 22 10 Q25 9 26 10" stroke="#7c5fff" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M2 14 Q7 12 12 14 Q17 16 22 14 Q25 13 26 14" stroke="#7c5fff" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/></svg>`,
+  ρ:`<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="12" r="2" fill="#4ab5ff" opacity="0.7"/><circle cx="16" cy="8" r="1.5" fill="#4ab5ff" opacity="0.6"/><circle cx="20" cy="16" r="2" fill="#4ab5ff" opacity="0.8"/><circle cx="12" cy="20" r="1.5" fill="#4ab5ff" opacity="0.5"/><circle cx="6" cy="20" r="1" fill="#4ab5ff" opacity="0.4"/><circle cx="22" cy="10" r="1.5" fill="#4ab5ff" opacity="0.6"/><text x="6" y="26" font-size="8" fill="#4ab5ff" font-family="monospace">ρ</text></svg>`,
+  A:`<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="14" cy="14" r="9" stroke="#f05454" stroke-width="1.8"/><line x1="5" y1="14" x2="23" y2="14" stroke="#f05454" stroke-width="1.2" stroke-dasharray="2 2"/><line x1="14" y1="5" x2="14" y2="23" stroke="#f05454" stroke-width="1.2" stroke-dasharray="2 2"/></svg>`,
+  ω:`<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="14" cy="14" r="8" stroke="#dd66ff" stroke-width="1.8"/><path d="M14 6 A8 8 0 0 1 22 14" stroke="#dd66ff" stroke-width="2.5" stroke-linecap="round"/><polygon points="19,10 23,14 22,8" fill="#dd66ff"/></svg>`,
+  vw:`<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 10 Q10 7 17 10 Q22 12 25 10" stroke="#4ab5ff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M3 16 Q8 13 15 16 Q20 18 24 15" stroke="#4ab5ff" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.7"/><polygon points="22,7 26,10 22,13" fill="#4ab5ff"/></svg>`,
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// STATE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let currentStage=1;
+let cardsRead=new Set();
+let paramsFound=new Set();
+let currentParams={};
+let dataPoints=[];
+let showFull=false;
+let selectedModel=null;
+let trainedModel=null;
+let trainComplete=false;
+let FEATURE_WEIGHTS=[];
+let guessSlots=[null,null,null];
+let guessSubmitted=false;
+let aiRangeVal=null;
+let tbRangeVal=null;
+let bookPageIdx=0;
+let bookPages=[];
+
+let labAnimId=null;
+let theoryAnimId=null;
+let simAnimIds={};
+let bubPos=[],bubVel=[];
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// NAVIGATION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const STAGE_LABELS=['Real World','History','Theory','Parameters','Data','Choose AI','Training','AI Sim','Textbook Sim','Notebook','Analysis'];
+
+function buildPills(){
+  const pills=document.getElementById('stagePills');
+  pills.innerHTML='';
+  for(let i=1;i<=11;i++){
+    const sp=document.createElement('div');
+    sp.className='sp'+(i===currentStage?' active':i<currentStage?' done':' locked');
+    sp.id='sp'+i;
+    sp.onclick=()=>{if(i<currentStage)goToStage(i);};
+    sp.innerHTML=`<div class="sp-num">${i}</div><span class="sp-lbl">${STAGE_LABELS[i-1]}</span>`;
+    pills.appendChild(sp);
+  }
+}
+
+function goToStage(n){
+  stopAnims();
+  document.getElementById('stage-'+currentStage)?.classList.remove('active');
+  currentStage=n;
+  document.getElementById('stage-'+n)?.classList.add('active');
+  buildPills();
+  const ov=document.getElementById('flipOv');
+  ov.classList.add('show');
+  setTimeout(()=>ov.classList.remove('show'),220);
+  if(n===1)initScene();
+  if(n===3)initTheoryProj();
+  if(n===4){buildParamsGrid();initLabScene();}
+  if(n===5)buildDataStage();
+  if(n===7)startTraining();
+  if(n===8)initSimStage();
+  if(n===9)initTBStage();
+  if(n===10)initBook();
+}
+
+function goHome(){
+  sessionStorage.setItem('dlName', scientistName||'Scientist');
+  window.location.href='../../index.html?subject=physics&name=' + encodeURIComponent(scientistName||'Scientist');
+}
+function stopAnims(){
+  Object.values(simAnimIds).forEach(id=>cancelAnimationFrame(id));simAnimIds={};
+  if(theoryAnimId){cancelAnimationFrame(theoryAnimId);theoryAnimId=null;}
+  if(labAnimId){cancelAnimationFrame(labAnimId);labAnimId=null;}
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// S1: SCENE — Football kick animation
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let sceneT=0,sceneAnimId=null;
+function initScene(){
+  const cv=document.getElementById('cvScene');
+  if(!cv)return;
+  const w=cv.parentElement;cv.width=w.offsetWidth||220;cv.height=w.offsetHeight||280;
+  if(sceneAnimId)cancelAnimationFrame(sceneAnimId);
+  sceneT=0;
+  function frame(){sceneT+=0.012;drawScene(cv,sceneT);sceneAnimId=requestAnimationFrame(frame);}
+  requestAnimationFrame(frame);
+}
+function drawScene(cv,t){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  // Sky gradient
+  const sky=ctx.createLinearGradient(0,0,0,H*.65);
+  sky.addColorStop(0,'#0a1a2e');sky.addColorStop(1,'#0e2d1a');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H*.65);
+  // Ground
+  const grd=ctx.createLinearGradient(0,H*.65,0,H);
+  grd.addColorStop(0,'#1a3a0f');grd.addColorStop(1,'#0d2208');
+  ctx.fillStyle=grd;ctx.fillRect(0,H*.65,W,H*.35);
+  // Field lines
+  ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,H*.67);ctx.lineTo(W,H*.67);ctx.stroke();
+  // Stars
+  [[0.1,0.08],[0.45,0.12],[0.75,0.06],[0.2,0.22],[0.85,0.18],[0.6,0.28]].forEach(([px,py])=>{
+    const flicker=0.6+0.4*Math.sin(t*3+px*20);
+    ctx.fillStyle=`rgba(255,255,255,${0.5*flicker})`;ctx.beginPath();ctx.arc(px*W,py*H,1,0,Math.PI*2);ctx.fill();
+  });
+  // Goalpost (right side)
+  const gpX=W*.82,gpY=H*.55,gpW=W*.14,gpH=H*.15;
+  ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=3;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(gpX,H*.67);ctx.lineTo(gpX,gpY);ctx.lineTo(gpX+gpW,gpY);ctx.lineTo(gpX+gpW,H*.67);ctx.stroke();
+  ctx.lineWidth=1.5;ctx.strokeStyle='rgba(255,255,255,.3)';
+  ctx.beginPath();ctx.moveTo(gpX,gpY);ctx.lineTo(gpX+gpW*.5,gpY-H*.04);ctx.lineTo(gpX+gpW,gpY);ctx.stroke();
+
+  // Figure (player)
+  const figX=W*.12,figY=H*.64;
+  const kickPhase=Math.sin(t*1.5);
+  // Body
+  ctx.strokeStyle='#dce8f6';ctx.lineWidth=2.5;ctx.lineCap='round';
+  // Torso
+  ctx.beginPath();ctx.moveTo(figX,figY-28);ctx.lineTo(figX,figY-12);ctx.stroke();
+  // Head
+  ctx.fillStyle='#dce8f6';ctx.beginPath();ctx.arc(figX,figY-32,5,0,Math.PI*2);ctx.fill();
+  // Arms
+  ctx.beginPath();ctx.moveTo(figX,figY-24);ctx.lineTo(figX-8+kickPhase*3,figY-16);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(figX,figY-24);ctx.lineTo(figX+8-kickPhase*3,figY-16);ctx.stroke();
+  // Legs
+  const kickAng=Math.max(0,kickPhase*0.9);
+  ctx.beginPath();ctx.moveTo(figX,figY-12);ctx.lineTo(figX-5,figY);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(figX,figY-12);
+  const lx=figX+10*Math.cos(-kickAng*1.2),ly=figY-8+12*Math.sin(-kickAng*1.2+Math.PI*.5);
+  ctx.lineTo(lx,ly);ctx.stroke();
+  // Foot
+  ctx.beginPath();ctx.arc(lx,ly,2.5,0,Math.PI*2);ctx.fillStyle='#7a8fa8';ctx.fill();
+
+  // Ball trajectory
+  const cycleLen=3.5,cycleT=(t%cycleLen)/cycleLen;
+  const v0=22,angle=42*Math.PI/180,g=9.81;
+  const totalT=2*v0*Math.sin(angle)/g;
+  const range=v0*v0*Math.sin(2*angle)/g;
+  const scaleX=(W*.7)/range;
+  const scaleY=(H*.45)/((v0*Math.sin(angle))**2/(2*g));
+
+  if(cycleT>0.15){
+    const bt=((cycleT-0.15)/0.85)*totalT;
+    const bx=figX+14+v0*Math.cos(angle)*bt*scaleX;
+    const by=(H*.64)-((v0*Math.sin(angle)*bt-0.5*g*bt*bt)*scaleY);
+    // Trail
+    for(let i=1;i<=8;i++){
+      const tt=bt-i*0.04;if(tt<0)continue;
+      const tx=figX+14+v0*Math.cos(angle)*tt*scaleX;
+      const ty=(H*.64)-((v0*Math.sin(angle)*tt-0.5*g*tt*tt)*scaleY);
+      ctx.fillStyle=`rgba(0,224,150,${0.05*i})`;ctx.beginPath();ctx.arc(tx,ty,3-i*0.2,0,Math.PI*2);ctx.fill();
+    }
+    // Ball
+    if(bx<W*.97&&by>0){
+      const br=ctx.createRadialGradient(bx-1,by-1,0,bx,by,6);
+      br.addColorStop(0,'#ffffff');br.addColorStop(0.4,'#c8e6c9');br.addColorStop(1,'#1b5e20');
+      ctx.fillStyle=br;ctx.beginPath();ctx.arc(bx,by,6,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1;ctx.stroke();
+      // Pentagon pattern
+      ctx.fillStyle='rgba(0,0,0,.3)';const spin=t*5;
+      for(let i=0;i<3;i++){const a=spin+i*2.1;ctx.beginPath();ctx.arc(bx+3*Math.cos(a),by+3*Math.sin(a),1.5,0,Math.PI*2);ctx.fill();}
+    }
+    // Goal check
+    if(bx>=gpX&&bx<=gpX+gpW&&by<=H*.67&&by>=gpY&&cycleT>0.6&&cycleT<0.9){
+      ctx.fillStyle='rgba(0,224,150,.15)';ctx.fillRect(gpX,gpY,gpW,H*.67-gpY);
+      ctx.font=`bold ${H*.045}px Inter,sans-serif`;ctx.fillStyle='#00e096';ctx.textAlign='center';
+      ctx.fillText('GOAL!',W*.5,H*.35);
+    }
+  }
+  // Trajectory arc guide (faint)
+  ctx.strokeStyle='rgba(0,224,150,.12)';ctx.lineWidth=1;ctx.setLineDash([3,4]);
+  ctx.beginPath();
+  for(let i=0;i<=50;i++){const bt=(i/50)*totalT;const bx=figX+14+v0*Math.cos(angle)*bt*scaleX;const by=(H*.64)-((v0*Math.sin(angle)*bt-0.5*g*bt*bt)*scaleY);i===0?ctx.moveTo(bx,by):ctx.lineTo(bx,by);}
+  ctx.stroke();ctx.setLineDash([]);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// S2: HISTORY CARDS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const CARDS=[
+  {year:'~330 BC',title:"Aristotle's Theory",icon:'📜',desc:'Believed objects stop moving once the force is gone — a fundamentally wrong idea.',insight:"Aristotle thought a thrown object needed constant force. The real insight came 2000 years later when Galileo showed that motion continues without force.",person:'Aristotle',loc:'Athens · 384–322 BC',tag:'Incorrect theory sparks 2000 years of debate'},
+  {year:'1638',title:"Galileo's Parabola",icon:'🔭',desc:'First to prove projectile paths are parabolas using mathematics and experiment.',insight:"Galileo resolved motion into horizontal and vertical parts. By rolling balls off inclines he proved the path is a perfect parabola.",person:'Galileo Galilei',loc:'Florence · 1564–1642',tag:'Parabolic trajectory proven'},
+  {year:'1687',title:"Newton's Laws",icon:'🍎',desc:"Newton's three laws and gravity equation gave the complete, exact theory.",insight:"Newton unified Galileo's work. F=ma and his law of universal gravitation explained exactly why projectiles follow parabolas — gravity is the constant downward acceleration.",person:'Isaac Newton',loc:'Cambridge · 1643–1727',tag:'Universal theory of motion'}
+];
+function buildHistoryCards(){
+  const row=document.getElementById('historyCards');row.innerHTML='';
+  CARDS.forEach((c,i)=>{
+    const hc=document.createElement('div');hc.className='hc';hc.id='hc'+i;
+    hc.innerHTML=`<div class="hc-inner"><div class="hc-f"><div class="hc-ck">✓</div><div class="hc-yr">${c.year}</div><div class="hc-ico">${c.icon}</div><div class="hc-name">${c.title}</div><div class="hc-desc">${c.desc}</div><div class="hc-cta">↻ Tap to reveal</div></div><div class="hc-b"><div class="hc-itag">✦ Key Insight</div><div class="hc-btitle">${c.tag}</div><div class="hc-bbody">${c.insight}</div><div class="hc-bpers"><div class="hc-av">${c.person[0]}</div><div><div style="font-size:.64rem;font-weight:700">${c.person}</div><div style="font-size:.58rem;color:var(--text3)">${c.loc}</div></div></div></div></div>`;
+    hc.onclick=()=>flipCard(i);row.appendChild(hc);
+  });
+}
+function flipCard(i){
+  const hc=document.getElementById('hc'+i);
+  if(!hc||hc.classList.contains('flipped'))return;
+  playFlip();hc.classList.add('flipped','read');
+  setTimeout(()=>{
+    cardsRead.add(i);const n=cardsRead.size,pct=Math.round(n/3*100);
+    document.getElementById('cardsReadNum').textContent=n;
+    document.getElementById('cardsPct').textContent=pct+'%';
+    document.getElementById('s2PF').style.width=pct+'%';
+    if(n===3){document.getElementById('s2FB').classList.add('show');document.getElementById('histNextBtn').disabled=false;playChime();}
+  },100);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// S3: THEORY — live projectile canvas
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function initTheoryProj(){
+  const cv=document.getElementById('theoryProjCanvas');if(!cv)return;
+  const box=cv.parentElement;cv.width=box.offsetWidth||300;cv.height=box.offsetHeight||220;
+  updateTheorySliders();
+}
+function updateTheorySliders(){
+  const ang=parseFloat(document.getElementById('s3A').value);
+  const v0=parseFloat(document.getElementById('s3V').value);
+  document.getElementById('s3Av').textContent=ang+'°';
+  document.getElementById('s3Vv').textContent=v0+' m/s';
+  const g=9.81,rad=ang*Math.PI/180;
+  const R=v0*v0*Math.sin(2*rad)/g;
+  const H=v0*v0*Math.sin(rad)*Math.sin(rad)/(2*g);
+  const T=2*v0*Math.sin(rad)/g;
+  document.getElementById('theoryR').textContent=R.toFixed(1)+'m';
+  document.getElementById('theoryH').textContent=H.toFixed(1)+'m';
+  document.getElementById('theoryT').textContent=T.toFixed(2)+'s';
+  if(!theoryAnimId)animTheoryProj();
+}
+function animTheoryProj(){
+  const cv=document.getElementById('theoryProjCanvas');if(!cv)return;
+  const box=cv.parentElement;
+  if(cv.width!==box.offsetWidth&&box.offsetWidth>0){cv.width=box.offsetWidth;cv.height=box.offsetHeight;}
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  const ang=parseFloat(document.getElementById('s3A')?.value||45)*Math.PI/180;
+  const v0=parseFloat(document.getElementById('s3V')?.value||20);
+  const g=9.81;
+  const totalT=2*v0*Math.sin(ang)/g;
+  const R=v0*v0*Math.sin(2*ang)/g;
+  const maxH=v0*v0*Math.sin(ang)*Math.sin(ang)/(2*g);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#07090f';ctx.fillRect(0,0,W,H);
+  // grid
+  ctx.strokeStyle='rgba(0,224,150,.05)';ctx.lineWidth=1;
+  for(let y=0;y<H;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  for(let x=0;x<W;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  // ground
+  ctx.strokeStyle='rgba(0,224,150,.3)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(8,H-16);ctx.lineTo(W-8,H-16);ctx.stroke();
+
+  const padX=16,padY=20,groundY=H-16;
+  const scaleX=(W-2*padX)/R;
+  const scaleY=(groundY-padY)/maxH;
+  const scale=Math.min(scaleX,scaleY);
+
+  // Trajectory
+  const pts=[];
+  for(let i=0;i<=80;i++){const bt=(i/80)*totalT;pts.push({x:padX+v0*Math.cos(ang)*bt*scale,y:groundY-(v0*Math.sin(ang)*bt-0.5*g*bt*bt)*scale});}
+  ctx.strokeStyle='rgba(0,224,150,.6)';ctx.lineWidth=2;ctx.lineJoin='round';
+  ctx.beginPath();pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();
+  // Fill under
+  ctx.lineTo(padX+R*scale,groundY);ctx.lineTo(padX,groundY);ctx.closePath();
+  ctx.fillStyle='rgba(0,224,150,.05)';ctx.fill();
+
+  // Animated ball
+  const bt=(Date.now()/1000%(totalT+1));
+  if(bt<totalT){
+    const bx=padX+v0*Math.cos(ang)*bt*scale,by=groundY-(v0*Math.sin(ang)*bt-0.5*g*bt*bt)*scale;
+    const gr=ctx.createRadialGradient(bx,by,0,bx,by,8);
+    gr.addColorStop(0,'rgba(0,224,150,.9)');gr.addColorStop(1,'rgba(0,224,150,0)');
+    ctx.fillStyle=gr;ctx.beginPath();ctx.arc(bx,by,8,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#00e096';ctx.beginPath();ctx.arc(bx,by,4.5,0,Math.PI*2);ctx.fill();
+  }
+  // Angle arc
+  ctx.strokeStyle='rgba(245,166,35,.6)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(padX,groundY,28,-(ang),0,false);ctx.stroke();
+  ctx.fillStyle='#f5a623';ctx.font='9px JetBrains Mono,monospace';ctx.textAlign='left';
+  ctx.fillText(Math.round(ang*180/Math.PI)+'°',padX+32,groundY-10);
+
+  theoryAnimId=requestAnimationFrame(animTheoryProj);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// S4: PARAMS BUBBLES
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function buildParamsGrid(){
+  const list=document.getElementById('paramItemsList');list.innerHTML='';
+  PARAMS.forEach((p,i)=>{
+    const div=document.createElement('div');div.className='pi';div.id='pi'+i;
+    const icon=PARAM_SVGS[p.symbol]||`<span style="font-size:1.4rem">${p.icon}</span>`;
+    div.innerHTML=`<span class="pi-q">?</span><div class="pi-fc"><div class="pi-fi" style="color:var(--teal)">${icon}</div><div class="pi-fn">${p.name}</div></div><div class="pi-pulse"></div>`;
+    list.appendChild(div);});
+}
+function initLabScene(){const canvas=document.getElementById('labCanvas');if(!canvas)return;const cont=document.getElementById('labScene');document.querySelectorAll('.bubble-fl').forEach(b=>b.remove());const W=cont.offsetWidth||400,H=cont.offsetHeight||300;canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');ctx.fillStyle='#07090f';ctx.fillRect(0,0,W,H);ctx.strokeStyle='rgba(0,224,150,.04)';for(let y=0;y<H;y+=40){ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}bubPos=[];bubVel=[];PARAMS.forEach((p,i)=>{const sz=44+Math.random()*12,x=sz+Math.random()*(W-sz*2),y=sz+Math.random()*(H-sz*2);bubPos.push({x,y,sz,i});bubVel.push({vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5});const b=document.createElement('div');b.className='bubble-fl';b.id='bub'+i;b.style.cssText=`width:${sz}px;height:${sz}px;left:${x-sz/2}px;top:${y-sz/2}px;background:radial-gradient(circle at 35% 35%,${BCOLS[i]}33,${BCOLS[i]}11);border:2px solid ${BCOLS[i]}55;font-size:${sz*.42}px;color:${BCOLS[i]};z-index:2;`;b.textContent=p.icon;b.onclick=e=>{e.stopPropagation();bubClick(i);};cont.appendChild(b);});animBubs(W,H);}
+function animBubs(W,H){
+  if(labAnimId)cancelAnimationFrame(labAnimId);
+  function fr(){
+    bubPos.forEach((pos,i)=>{
+      if(paramsFound.has(i))return;
+      pos.x+=bubVel[i].vx;pos.y+=bubVel[i].vy;
+      const s=pos.sz/2;
+      if(pos.x<s||pos.x>W-s)bubVel[i].vx*=-1;
+      if(pos.y<s||pos.y>H-s)bubVel[i].vy*=-1;
+      pos.x=Math.max(s,Math.min(W-s,pos.x));pos.y=Math.max(s,Math.min(H-s,pos.y));
+      const bEl=document.getElementById('bub'+i);
+      if(bEl){bEl.style.left=(pos.x-s)+'px';bEl.style.top=(pos.y-s)+'px';}
+    });
+    labAnimId=requestAnimationFrame(fr);
+  }fr();
+}
+function bubClick(i){
+  if(paramsFound.has(i))return;
+  playPop();
+  const p=PARAMS[i];
+  document.getElementById('bub'+i)?.classList.add('disc');
+  const piEl=document.getElementById('pi'+i);
+  if(piEl){piEl.classList.add('found','jf');setTimeout(()=>piEl.classList.remove('jf'),600);}
+  document.getElementById('pmIco').innerHTML=PARAM_SVGS[p.symbol]||p.icon;
+  document.getElementById('pmName').textContent=p.name;
+  document.getElementById('pmSym').textContent=p.symbol+' ('+p.unit+')';
+  document.getElementById('pmDesc').textContent=p.desc;
+  document.getElementById('paramModal').classList.remove('hidden');
+  paramsFound.add(i);
+  const n=paramsFound.size;
+  document.getElementById('foundCount').textContent=n;
+  document.getElementById('s4PF').style.width=(n/10*100)+'%';
+  if(n>=10){document.getElementById('params4Btn').disabled=false;document.getElementById('params4BtnNav').disabled=false;}
+}
+function closeParamModal(){document.getElementById('paramModal').classList.add('hidden');}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// S5: DATA COLLECTION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function buildDataStage(){
+  const sl=document.getElementById('dataSliders');sl.innerHTML='';
+  PARAMS.forEach(p=>{
+    currentParams[p.symbol]=p.default;
+    const presets=STEPPER_PRESETS[p.symbol]||[];
+    const box=document.createElement('div');box.className='stepper-box';
+    const presetsHTML=presets.map(pr=>`<button class="step-preset${Math.abs(pr.v-p.default)<1e-6?' active':''}" onclick="setStepVal('${p.symbol}',${pr.v},this,'${p.unit}')">${pr.l}</button>`).join('');
+    const iconSVG=`<span class="param-svg-icon" style="color:var(--teal);display:inline-flex;align-items:center;width:14px;height:14px;flex-shrink:0">${PARAM_SVGS[p.symbol]||p.icon}</span>`;
+    box.innerHTML=`<div class="stepper-top">
+      <div class="stepper-nm">${iconSVG} ${p.name}</div>
+      <div class="stepper-ctrl">
+        <button class="step-btn" onclick="stepVal('${p.symbol}',-1,'${p.unit}')">−</button>
+        <div class="step-val" id="dv-${p.symbol}">${p.default}${p.unit?' '+p.unit:''}</div>
+        <button class="step-btn" onclick="stepVal('${p.symbol}',1,'${p.unit}')">+</button>
+      </div>
+    </div>
+    <div class="step-presets" id="presets-${p.symbol}">${presetsHTML}</div>`;
+    sl.appendChild(box);
+  });
+  document.getElementById('dTblHead').innerHTML='<tr><th>#</th><th>Src</th><th>θ°</th><th>v₀</th><th>g</th><th>Range(m)</th><th>H(m)</th></tr>';
+  if(dataPoints.length<1500)preload();
+  updateDataUI();
+}
+function stepVal(sym,dir,unit){
+  const p=PARAMS.find(p=>p.symbol===sym);
+  if(!p)return;
+  const cur=currentParams[sym]||p.default;
+  const newV=dir>0 ? Math.round((cur+dir*p.step*2)/p.step)*p.step : Math.max(p.min,Math.round((cur+dir*p.step*2)/p.step)*p.step);
+  currentParams[sym]=newV;
+  const disp=newV<1?newV.toFixed(3):newV.toFixed(newV>=10?1:2);
+  document.getElementById('dv-'+sym).textContent=disp+(unit?' '+unit:'');
+  const container=document.getElementById('presets-'+sym);
+  if(container){container.querySelectorAll('.step-preset').forEach(btn=>{
+    const bv=parseFloat(btn.getAttribute('onclick').match(/setStepVal\('[^']+',([^,]+)/)?.[1]||'NaN');
+    btn.classList.toggle('active',Math.abs(bv-newV)<1e-6);
+  });}
+}
+function setStepVal(sym,val,btn,unit){
+  const p=PARAMS.find(p=>p.symbol===sym);if(!p)return;
+  currentParams[sym]=val;
+  const disp=val<1?val.toFixed(3):val.toFixed(val>=10?1:2);
+  document.getElementById('dv-'+sym).textContent=disp+(unit?' '+unit:'');
+  const container=btn.closest('.step-presets');
+  if(container)container.querySelectorAll('.step-preset').forEach(b=>b.classList.toggle('active',b===btn));
+}
+function computeRange(v,noisy=false){
+  const θ=(v.θ||45)*Math.PI/180,v0=v.v0||20,g=v.g||9.81,h0=v.h0||0;
+  const vx=v0*Math.cos(θ),vy=v0*Math.sin(θ);
+  // Time to land accounting for launch height
+  const disc=vy*vy+2*g*h0;if(disc<0)return 0;
+  const totalT=(vy+Math.sqrt(disc))/g;
+  let R=vx*totalT;
+  // Wind effect: positive vw = headwind (reduces range), negative = tailwind (increases range)
+  const vw=v.vw||0;R-=vw*totalT*0.4;
+  // Simple drag estimate
+  const Cd=v.Cd||0.2,ρ=v.ρ||1.2,A=v.A||0.038,m=v.m||0.43;
+  // Drag approximation: average drag deceleration = 0.5*Cd*ρ*A*v0²/m, reducing range
+  // This is a first-order approximation valid for moderate drag (Cd < 0.5)
+  const dragFactor=Math.max(0.05,Math.exp(-(Cd*ρ*A*totalT*v0)/(2*m)));
+  R*=dragFactor;
+  if(noisy)R+=R*(Math.random()-.5)*0.02;
+  return Math.max(0,R);
+}
+function computeMaxHeight(v){
+  const θ=(v.θ||45)*Math.PI/180,v0=v.v0||20,g=v.g||9.81,h0=v.h0||0;
+  return h0+v0*v0*Math.sin(θ)*Math.sin(θ)/(2*g);
+}
+function genDataset(n){
+  const pts=[];
+  for(let i=0;i<n;i++){
+    const v={};
+    PARAMS.forEach(p=>{v[p.symbol]=p.min+(Math.random()*(p.max-p.min));});
+    v.θ=5+Math.random()*80;v.v0=5+Math.random()*45;v.g=1+Math.random()*25;
+    v.h0=Math.random()*8;v.m=0.1+Math.random()*2;v.Cd=Math.random()*0.8;
+    v.ρ=0.9+Math.random()*0.6;v.A=0.005+Math.random()*0.06;v.ω=Math.random()*1000;v.vw=(Math.random()-.5)*10;
+    pts.push({values:v,range:computeRange(v,true),maxH:computeMaxHeight(v),user:false});
+  }
+  return pts;
+}
+function preload(){
+  dataPoints=[];
+  dataPoints.push(...genDataset(1200));
+  // 100 sweeping angle (most important factor)
+  for(let i=0;i<100;i++){const v={};PARAMS.forEach(p=>{v[p.symbol]=p.default;});v.θ=5+Math.random()*80;dataPoints.push({values:v,range:computeRange(v,true),maxH:computeMaxHeight(v),user:false});}
+  // 100 sweeping speed (most important factor)
+  for(let i=0;i<100;i++){const v={};PARAMS.forEach(p=>{v[p.symbol]=p.default;});v.v0=3+Math.random()*47;dataPoints.push({values:v,range:computeRange(v,true),maxH:computeMaxHeight(v),user:false});}
+  // 100 sweeping gravity
+  for(let i=0;i<100;i++){const v={};PARAMS.forEach(p=>{v[p.symbol]=p.default;});v.g=1.62+Math.random()*18;dataPoints.push({values:v,range:computeRange(v,true),maxH:computeMaxHeight(v),user:false});}
+}
+function addDataPoint(){
+  const v={};PARAMS.forEach(p=>{v[p.symbol]=currentParams[p.symbol]||p.default;});
+  dataPoints.push({values:v,range:computeRange(v,true),maxH:computeMaxHeight(v),user:true});
+  playAdd();const f=document.getElementById('userFlash');f.classList.add('on');setTimeout(()=>f.classList.remove('on'),1500);
+  updateDataUI();
+}
+function addBulkData(n){
+  dataPoints.push(...genDataset(n));
+  const f=document.getElementById('aiFlash');f.classList.add('on');setTimeout(()=>f.classList.remove('on'),1500);
+  updateDataUI();
+}
+function toggleFullTable(){showFull=!showFull;updateDataUI();}
+function updateDataUI(){
+  const tot=dataPoints.length,usr=dataPoints.filter(d=>d.user).length;
+  document.getElementById('totalPoints').textContent=tot;
+  document.getElementById('userPoints').textContent=usr;
+  document.getElementById('s5TblCt').textContent=`Showing ${showFull?'all '+tot:'last 8'}`;
+  renderTable();
+}
+function renderTable(){
+  const body=document.getElementById('dTblBody');body.innerHTML='';
+  const rows=showFull?[...dataPoints].reverse():[...dataPoints].slice(-8).reverse();
+  rows.forEach((dp,i)=>{
+    const tr=document.createElement('tr');
+    const θ=(dp.values.θ||45).toFixed(0),v0=(dp.values.v0||20).toFixed(1),g=(dp.values.g||9.81).toFixed(2);
+    tr.innerHTML=`<td style="color:var(--text3)">${i+1}</td><td style="color:${dp.user?'var(--teal)':'var(--text3)'}">${dp.user?'You':'AI'}</td><td>${θ}°</td><td>${v0}</td><td>${g}</td><td style="color:var(--amber)">${dp.range.toFixed(2)}</td><td>${dp.maxH.toFixed(2)}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// S6: MODEL SELECT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const MR={linear:'Good choice! The Ruler is clean and fast — will it capture the sin²(θ) curve?',polynomial:'Excellent! The Curve Finder loves physics — it might rediscover v₀²·sin(2θ)/g all on its own!',neural:'The Black Box! Pure pattern recognition — curious what physics it will extract from raw numbers.'};
+function selectModel(m,el){
+  selectedModel=m;document.querySelectorAll('.mc').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');
+  document.getElementById('modelNextBtn').disabled=false;
+  const r=document.getElementById('mascotResp');r.innerHTML=`⚽ <strong>ProjeBot says:</strong> ${MR[m]}`;r.classList.add('show');
+  playChime();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// S7: TRAINING
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const MM={linear:{name:'Linear Regression',color:'#f05454',desc:'Fits a straight line to the data.'},polynomial:{name:'Polynomial Regression',color:'#00e096',desc:'Finds the curved relationship in data.'},neural:{name:'Neural Network',color:'#7c5fff',desc:'Learns any pattern purely from data.'}};
+
+function startTraining(){
+  trainComplete=false;trainedModel=null;
+  document.getElementById('trainNextBtn').disabled=true;
+  document.getElementById('trainNextBtnNav').disabled=true;
+  document.getElementById('tProgF').style.width='0%';
+  document.getElementById('derivedF').textContent='Training in progress…';
+  buildGuessGame();
+  const m=MM[selectedModel];
+  const hdr=document.getElementById('s7MHdr');
+  hdr.innerHTML=`<div class="s7-mn" style="color:${m.color}">${m.name}</div><div class="s7-md">${m.desc}</div>`;
+  const cv=document.getElementById('epochCanvas');
+  const par=cv.parentElement;cv.width=par.offsetWidth||300;cv.height=130;
+  const lossPoints=[],totalSteps=60;
+  let step=0;
+  const log=document.getElementById('trainLog');log.innerHTML='';
+  const finalLoss=selectedModel==='neural'?0.004:selectedModel==='polynomial'?0.008:0.045;
+  function trainStep(){
+    if(step>=totalSteps){
+      finishTraining();return;
+    }
+    step++;
+    const prog=step/totalSteps;
+    const decay=Math.exp(-step/(totalSteps*.25));
+    const loss=finalLoss+(finalLoss*40-finalLoss)*decay+(Math.random()-.5)*finalLoss*.3;
+    lossPoints.push(Math.max(finalLoss*.9,loss));
+    document.getElementById('tProgF').style.width=(prog*100)+'%';
+    drawEpochGraph(cv,lossPoints,m.color);
+    if(step%10===0||step===1){
+      const entry=document.createElement('div');
+      entry.className=step===totalSteps?'hl':'';
+      entry.textContent=`Epoch ${step*5} — loss: ${loss.toFixed(5)}`;
+      log.insertBefore(entry,log.firstChild);
+    }
+    setTimeout(trainStep,55);
+  }
+  trainStep();
+}
+
+function finishTraining(){
+  trainComplete=true;
+  const m=selectedModel;
+  const r2=m==='polynomial'?0.987:m==='neural'?0.971:0.82;
+  trainedModel={type:m,r2,finalLoss:m==='neural'?0.004:m==='polynomial'?0.008:0.045};
+  // Set feature weights: θ, v0, g, h0, m, Cd, ρ, A, ω, vw
+  const rawW=m==='linear'?  [0.31,0.40,0.16,0.06,0.01,0.02,0.01,0.01,0.01,0.01]:
+             m==='polynomial'?[0.30,0.42,0.17,0.05,0.01,0.02,0.01,0.01,0.01,0.00]:
+                              [0.28,0.43,0.16,0.07,0.01,0.02,0.01,0.01,0.01,0.00];
+  const sumW=rawW.reduce((s,v)=>s+v,0);FEATURE_WEIGHTS=rawW.map(v=>v/sumW);
+  document.getElementById('derivedF').textContent=m==='linear'?'R ≈ a·v₀ + b·θ + c\n(linear approximation)':m==='polynomial'?'R ≈ v₀²·sin(2θ)/g\n· (1 + correction terms)':'R = f(θ, v₀, g, h₀, ...)\n[Neural Network — no explicit formula]';
+  document.getElementById('trainNextBtn').disabled=false;
+  document.getElementById('trainNextBtnNav').disabled=false;
+  const vomb=document.getElementById('viewOMBtn');if(vomb)vomb.disabled=false;
+  document.getElementById('guessSubmitBtn').disabled=guessSlots.some(s=>s===null);
+  playChime();
+}
+
+function drawEpochGraph(cv,points,color){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  const PAD={l:38,r:12,t:10,b:28};
+  ctx.fillStyle='#07090f';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=PAD.t+(H-PAD.t-PAD.b)*(i/4);ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(W-PAD.r,y);ctx.stroke();}
+  ctx.fillStyle='rgba(120,143,168,.8)';ctx.font='9px Inter,sans-serif';ctx.textAlign='center';
+  ctx.fillText('Training Steps (Epochs)',W/2,H-4);
+  if(points.length<2)return;
+  const maxV=Math.max(...points);
+  ctx.textAlign='right';ctx.font='8px JetBrains Mono,monospace';ctx.fillStyle='rgba(120,143,168,.6)';
+  for(let i=0;i<=4;i++){const v=maxV*(1-i/4),y=PAD.t+(H-PAD.t-PAD.b)*(i/4);ctx.fillText(v.toFixed(3),PAD.l-3,y+3);}
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin='round';
+  ctx.beginPath();
+  points.forEach((v,i)=>{const x=PAD.l+(W-PAD.l-PAD.r)*(i/(points.length-1)),y=PAD.t+(H-PAD.t-PAD.b)*(1-(maxV>0?v/maxV:0));i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.stroke();
+  ctx.lineTo(PAD.l+(W-PAD.l-PAD.r),H-PAD.b);ctx.lineTo(PAD.l,H-PAD.b);ctx.closePath();
+  ctx.fillStyle=color+'18';ctx.fill();
+}
+
+// GUESS GAME
+function buildGuessGame(){
+  const chips=document.getElementById('paramChips');if(!chips)return;
+  chips.innerHTML='';
+  PARAMS.forEach((p,i)=>{
+    const chip=document.createElement('div');chip.className='param-chip';chip.id='chip-'+p.symbol;
+    chip.draggable=true;chip.dataset.idx=i;
+    chip.innerHTML=`${p.icon} ${p.name}`;
+    chip.addEventListener('dragstart',e=>{e.dataTransfer.setData('paramIdx',i);});
+    chip.addEventListener('click',()=>tapToSlot(i));
+    chips.appendChild(chip);
+  });
+  guessSlots=[null,null,null];guessSubmitted=false;
+  document.getElementById('guessSubmitBtn').disabled=true;
+  document.getElementById('guessResult').className='guess-result';
+  document.getElementById('guessResult').innerHTML='';
+  document.getElementById('rankRevealPanel').style.display='none';
+  document.getElementById('guessGamePanel').style.display='';
+  document.getElementById('aiDiscPanel').style.display='none';
+}
+function tapToSlot(pIdx){
+  if(guessSubmitted)return;
+  const existing=guessSlots.indexOf(pIdx);
+  if(existing!==-1){guessSlots[existing]=null;renderSlots();return;}
+  const empty=guessSlots.indexOf(null);
+  if(empty===-1)return;
+  guessSlots[empty]=pIdx;renderSlots();
+}
+function dropToSlot(event,slotIdx){
+  event.preventDefault();event.currentTarget.classList.remove('drop-over');
+  if(guessSubmitted)return;
+  const pIdx=parseInt(event.dataTransfer.getData('paramIdx'));
+  const existing=guessSlots.indexOf(pIdx);
+  if(existing!==-1)guessSlots[existing]=guessSlots[slotIdx];
+  guessSlots[slotIdx]=pIdx;renderSlots();
+}
+function renderSlots(){
+  for(let i=0;i<3;i++){
+    const slot=document.getElementById('slot'+i);const pIdx=guessSlots[i];
+    if(pIdx===null){slot.className='drag-slot';slot.innerHTML=`<span class="slot-rank">${i+1}</span><span style="font-size:.64rem;color:var(--text3)">Drop factor here…</span>`;}
+    else{const p=PARAMS[pIdx];slot.className='drag-slot filled';slot.innerHTML=`<span class="slot-rank">${i+1}</span><span style="font-size:.68rem;font-weight:600">${p.icon} ${p.name}</span><button onclick="removeFromSlot(${i})" style="margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:.7rem">✕</button>`;}
+  }
+  PARAMS.forEach((_,i)=>{const chip=document.getElementById('chip-'+PARAMS[i].symbol);if(chip)chip.classList.toggle('used',guessSlots.includes(i));});
+  document.getElementById('guessSubmitBtn').disabled=guessSlots.some(s=>s===null)||!trainComplete;
+}
+function removeFromSlot(slotIdx){guessSlots[slotIdx]=null;renderSlots();}
+function viewOtherModels(){
+  const btn=document.getElementById('viewOMBtn');if(btn)btn.textContent='Coming soon…';
+  setTimeout(()=>{const b=document.getElementById('viewOMBtn');if(b)b.innerHTML='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="vertical-align:middle;margin-right:4px"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Compare Models';},1800);
+}
+function clearGuess(){guessSlots=[null,null,null];guessSubmitted=false;renderSlots();document.getElementById('guessResult').className='guess-result';document.getElementById('guessResult').innerHTML='';}
+function submitGuess(){
+  if(guessSlots.some(s=>s===null)||!trainComplete)return;
+  guessSubmitted=true;
+  const sorted=PARAMS.map((_,i)=>i).sort((a,b)=>FEATURE_WEIGHTS[b]-FEATURE_WEIGHTS[a]);
+  const top3=[sorted[0],sorted[1],sorted[2]];
+  const inTop3=guessSlots.filter(g=>top3.includes(g)).length;
+  const allCorrect=guessSlots[0]===top3[0]&&guessSlots[1]===top3[1]&&guessSlots[2]===top3[2];
+  const resultEl=document.getElementById('guessResult');
+  if(allCorrect){resultEl.className='guess-result show correct';resultEl.innerHTML='🏆 <strong>Perfect!</strong> You nailed all 3 — you think just like the AI!';playChime();}
+  else if(inTop3>=2){resultEl.className='guess-result show close';resultEl.innerHTML=`⚡ <strong>So close!</strong> You got ${inTop3}/3 in the right top factors!`;playTone(600,.3,'sine',.06);}
+  else{resultEl.className='guess-result show wrong';resultEl.innerHTML='🤔 <strong>Interesting guess!</strong> The AI found different top factors — see below!';playTone(300,.4,'triangle',.04);}
+  document.getElementById('guessSubmitBtn').disabled=true;
+  document.getElementById('guessClearBtn').disabled=true;
+  setTimeout(showRankReveal,1800);
+}
+function showRankReveal(){
+  document.getElementById('rankRevealPanel').style.display='';
+  document.getElementById('aiDiscPanel').style.display='';
+  const sortedFW=PARAMS.map((p,i)=>({p,w:FEATURE_WEIGHTS[i],i})).sort((a,b)=>b.w-a.w);
+  const reveal=document.getElementById('rankReveal');reveal.innerHTML='';
+  sortedFW.forEach((item,ri)=>{
+    const row=document.createElement('div');row.className='rank-row';
+    const cls=ri===0?'gold':ri===1?'silver':ri===2?'bronze':'rest';
+    row.innerHTML=`<div class="rank-num ${cls}">${ri+1}</div><span style="font-size:.68rem;font-weight:600;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:4px;flex:1">${item.p.icon} ${item.p.name}</span><div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:0%" id="rb${ri}"></div></div><span class="rank-pct">${(item.w*100).toFixed(0)}%</span>`;
+    reveal.appendChild(row);
+    setTimeout(()=>{row.classList.add('show');setTimeout(()=>{const bar=document.getElementById('rb'+ri);if(bar)bar.style.width=(item.w*100)+'%';},200);},ri*120);
+  });
+  const disc=document.getElementById('aiDisc');disc.innerHTML='';
+  const insights=['Primary driver — θ controls direction of velocity split','Speed squared means doubling v₀ quadruples range','Sets deceleration — weaker gravity = much longer flight','Launch height gives extra time for horizontal travel','Causes real-world range reduction through drag'];
+  sortedFW.slice(0,5).forEach((item,ri)=>{
+    const row=document.createElement('div');row.className='disc-row';
+    row.innerHTML=`<div class="disc-pct">${(item.w*100).toFixed(0)}%</div><div><div class="disc-text-main">${item.p.icon} ${item.p.name}</div><div class="disc-text-sub">${insights[ri]||'Secondary influence on range'}</div></div>`;
+    disc.appendChild(row);
+  });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// S8: AI SIMULATION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let simParams={};
+let simUnlocked={high:true,med:false,low:false};
+const SIM_GROUPS=[
+  {id:'high',label:'⚡ High Impact',badge:'high',params:[0,1,2],desc:'These dominate range. Start here!'},
+  {id:'med',label:'🔧 Medium Impact',badge:'med',params:[3,4,5],desc:'Simulate High first to unlock.'},
+  {id:'low',label:'🌡️ Fine Details',badge:'low',params:[6,7,8,9],desc:'Unlock by running Medium simulation.'}
+];
+const SIM_PRESETS={
+  θ:[{l:'30°',v:30},{l:'45°',v:45},{l:'60°',v:60}],
+  v0:[{l:'10',v:10},{l:'20',v:20},{l:'40',v:40}],
+  g:[{l:'Moon',v:1.62},{l:'Earth',v:9.81},{l:'Mars',v:3.72}],
+  h0:[{l:'0m',v:0},{l:'2m',v:2},{l:'5m',v:5}],
+  m:[{l:'Light',v:0.1},{l:'Ball',v:0.43},{l:'Heavy',v:2}],
+  Cd:[{l:'Smooth',v:0.1},{l:'Ball',v:0.2},{l:'Rough',v:0.6}],
+  ρ:[{l:'High',v:0.9},{l:'Sea',v:1.2},{l:'Dense',v:1.4}],
+  A:[{l:'Small',v:0.01},{l:'Ball',v:0.038},{l:'Large',v:0.08}],
+  ω:[{l:'None',v:0},{l:'Slow',v:500},{l:'Fast',v:2000}],
+  vw:[{l:'Tail',v:-5},{l:'Still',v:0},{l:'Head',v:5}],
+};
+function buildSimStepper(pi,color='var(--teal)'){
+  const p=PARAMS[pi];simParams[p.symbol]=simParams[p.symbol]??p.default;
+  const presets=SIM_PRESETS[p.symbol]||[];
+  const presetsHTML=presets.map(pr=>`<button class="step-preset${Math.abs(pr.v-p.default)<1e-6?' active':''}" onclick="setSimVal('${p.symbol}',${pr.v},this,'${p.unit}')">${pr.l}</button>`).join('');
+  return `<div class="stepper-box">
+    <div class="stepper-top">
+      <div class="stepper-nm"><span class="param-svg-icon" style="color:${color};display:inline-flex;align-items:center;width:14px;height:14px;flex-shrink:0">${PARAM_SVGS[p.symbol]||p.icon}</span> ${p.name}</div>
+      <div class="stepper-ctrl">
+        <button class="step-btn" onclick="stepSimVal('${p.symbol}',-1,'${p.unit}')">−</button>
+        <div class="step-val" id="sv-${p.symbol}" style="color:${color}">${p.default}${p.unit?' '+p.unit:''}</div>
+        <button class="step-btn" onclick="stepSimVal('${p.symbol}',1,'${p.unit}')">+</button>
+      </div>
+    </div>
+    <div class="step-presets" id="simpresets-${p.symbol}">${presetsHTML}</div>
+  </div>`;
+}
+function stepSimVal(sym,dir,unit){
+  const p=PARAMS.find(p=>p.symbol===sym);if(!p)return;
+  const cur=simParams[sym]||p.default;
+  const newV=dir>0 ? Math.round((cur+dir*p.step*2)/p.step)*p.step : Math.max(p.min,Math.round((cur+dir*p.step*2)/p.step)*p.step);
+  simParams[sym]=newV;
+  const disp=newV<1?newV.toFixed(3):newV.toFixed(newV>=10?1:2);
+  const el=document.getElementById('sv-'+sym);if(el)el.textContent=disp+(unit?' '+unit:'');
+  const cont=document.getElementById('simpresets-'+sym);
+  if(cont)cont.querySelectorAll('.step-preset').forEach(btn=>{
+    const bv=parseFloat(btn.getAttribute('onclick').match(/setSimVal\('[^']+',([^,]+)/)?.[1]||'NaN');
+    btn.classList.toggle('active',Math.abs(bv-newV)<1e-6);
+  });
+}
+function setSimVal(sym,val,btn,unit){
+  const p=PARAMS.find(p=>p.symbol===sym);if(!p)return;
+  simParams[sym]=val;
+  const disp=val<1?val.toFixed(3):val.toFixed(val>=10?1:2);
+  const el=document.getElementById('sv-'+sym);if(el)el.textContent=disp+(unit?' '+unit:'');
+  const cont=btn.closest('.step-presets');
+  if(cont)cont.querySelectorAll('.step-preset').forEach(b=>b.classList.toggle('active',b===btn));
+}
+function toggleSimGroup(id){
+  const body=document.getElementById('sgrp-body-'+id);
+  const chev=document.getElementById('sgrp-chev-'+id);
+  if(!body||body.classList.contains('hidden'))return;
+  const isHidden=body.style.display==='none';
+  body.style.display=isHidden?'':'none';
+  if(chev)chev.classList.toggle('open',isHidden);
+}
+function initSimStage(){
+  const cont=document.getElementById('simSliders');cont.innerHTML='';
+  simUnlocked={high:true,med:false,low:false};
+  PARAMS.forEach(p=>{simParams[p.symbol]=p.default;});
+  SIM_GROUPS.forEach(grp=>{
+    const gc=document.createElement('div');gc.className='sim-group-box';gc.id='sgrp-'+grp.id;
+    const bodyHTML=grp.params.map(pi=>buildSimStepper(pi,grp.id==='high'?'var(--teal)':grp.id==='med'?'var(--amber)':'var(--blue)')).join('');
+    gc.innerHTML=`<div class="sim-group-hdr" onclick="toggleSimGroup('${grp.id}')"><div class="sim-group-hdr-left"><span class="sim-group-badge ${grp.badge}">${grp.label}</span></div><span class="sim-group-chevron open" id="sgrp-chev-${grp.id}">▶</span></div><div class="sim-group-body" id="sgrp-body-${grp.id}">${grp.id==='high'?bodyHTML:`<div class="sim-group-locked" id="sgrp-lock-${grp.id}">🔒 ${grp.desc}</div>`}</div>`;
+    cont.appendChild(gc);
+    if(grp.id!=='high'){const b=document.getElementById('sgrp-body-'+grp.id);if(b)b.style.display='';}
+  });
+  document.getElementById('aiModelLabel').textContent=({linear:'Linear Reg.',polynomial:'Polynomial Reg.',neural:'Neural Net'}[selectedModel]||'AI Model');
+  document.getElementById('aiFormulaDisp').textContent=selectedModel==='linear'?'R ≈ a·v₀ + b·θ + c':selectedModel==='polynomial'?'R ≈ v₀²·sin(2θ)/g\n+ drag corrections':'R = f(θ, v₀, g, h₀, ...) [NN]';
+  initProjCanvas('simAICanvas','#00e096');
+}
+function unlockSimGroup(id){
+  simUnlocked[id]=true;
+  const grp=SIM_GROUPS.find(g=>g.id===id);if(!grp)return;
+  const body=document.getElementById('sgrp-body-'+id);
+  const lock=document.getElementById('sgrp-lock-'+id);if(lock)lock.remove();
+  const color=id==='med'?'var(--amber)':'var(--blue)';
+  if(body)body.innerHTML=grp.params.map(pi=>buildSimStepper(pi,color)).join('');
+  playChime();
+}
+function runAISim(){
+  const R=trainedModel?mlPredict(simParams):computeRange(simParams,false);
+  aiRangeVal=R;
+  document.getElementById('aiRange').textContent=R.toFixed(2);
+  document.getElementById('cmpAI').textContent=R.toFixed(2)+'m';
+  animProjectile('simAICanvas',simParams,'#00e096','aiGoalFlash',null);
+  if(!simUnlocked.med)unlockSimGroup('med');
+  else if(!simUnlocked.low)unlockSimGroup('low');
+}
+
+
+function mlPredict(v){
+  let R=computeRange(v,false);
+  const noise=trainedModel.type==='linear'?0.08:trainedModel.type==='polynomial'?0.015:0.025;
+  R*=(1+(Math.random()-.5)*noise);
+  return Math.max(0,R);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// S9: TEXTBOOK SIMULATION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let _tbG=9.81,_tbA=45,_tbV=20;
+function initTBStage(){_tbG=9.81;_tbA=45;_tbV=20;initProjCanvas('simTBCanvas','#f5a623');}
+function tbPickWorld(el){document.querySelectorAll('.tb-world').forEach(e=>e.classList.remove('active'));el.classList.add('active');_tbG=parseFloat(el.dataset.g);document.getElementById('tbGv').textContent=_tbG.toFixed(2);}
+function tbPickAngle(el){document.querySelectorAll('.tb-angle-btn').forEach(e=>e.classList.remove('active'));el.classList.add('active');_tbA=parseInt(el.dataset.a);document.getElementById('tbAngleVal').textContent=_tbA+'°';}
+function tbStepG(d){_tbG=Math.max(0.1,parseFloat((_tbG+d).toFixed(2)));document.getElementById('tbGv').textContent=_tbG.toFixed(2);document.querySelectorAll('.tb-world').forEach(e=>e.classList.toggle('active',Math.abs(parseFloat(e.dataset.g)-_tbG)<0.05));}
+function tbStepA(d){_tbA=Math.max(1,Math.min(89,_tbA+d));document.getElementById('tbAngleVal').textContent=_tbA+'°';document.querySelectorAll('.tb-angle-btn').forEach(e=>e.classList.toggle('active',parseInt(e.dataset.a)===_tbA));}
+function tbStepV(d){_tbV=Math.max(1,Math.min(80,_tbV+d));document.getElementById('tbVv').textContent=_tbV+' m/s';}
+function runTBSim(){
+  const rad=_tbA*Math.PI/180;
+  const h0=simParams.h0||0;
+  // Correct range accounting for launch height: solve 0 = h0 + vy*t - 0.5*g*t²
+  const vy=_tbV*Math.sin(rad),vx=_tbV*Math.cos(rad);
+  const disc=vy*vy+2*_tbG*h0;
+  const T=(vy+Math.sqrt(Math.max(0,disc)))/_tbG;
+  const R=vx*T;
+  tbRangeVal=R;
+  document.getElementById('tbRange').textContent=R.toFixed(2);
+  document.getElementById('cmpTB').textContent=R.toFixed(2)+'m';
+  if(aiRangeVal!==null){
+    const diff=Math.abs(aiRangeVal-R),pct=R>0?(diff/R*100).toFixed(2):'0';
+    const box=document.getElementById('diffBox');if(box)box.style.display='';
+    document.getElementById('diffTxt').innerHTML=`<strong style="color:var(--amber)">Δ = ${diff.toFixed(3)}m (${pct}%)</strong> — ${aiRangeVal>R?'AI prediction longer':'Textbook formula longer'}.<br><span style="font-size:.64rem;color:var(--text2)">${trainedModel?`${({linear:'Linear',polynomial:'Polynomial',neural:'Neural'}[trainedModel.type])} R²=${(trainedModel.r2||0).toFixed(3)}`:'Formula'}</span>`;
+  }
+  // Pass actual user params BUT with Cd=0, vw=0 (textbook = no drag, no wind)
+  const tbParams={θ:_tbA,v0:_tbV,g:_tbG,h0,Cd:0,ρ:simParams.ρ||1.2,A:simParams.A||0.038,m:simParams.m||0.43,ω:0,vw:0};
+  const _R=tbRangeVal;
+  animProjectile('simTBCanvas',{θ:_tbA,v0:_tbV,g:_tbG,h0:0,Cd:0,ρ:1.2,A:0.038,m:0.43,ω:0,vw:0},'#f5a623','tbGoalFlash',null);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PROJECTILE ANIMATION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function initProjCanvas(id,color){
+  const cv=document.getElementById(id);if(!cv)return;
+  const par=cv.parentElement;
+  const rect=cv.getBoundingClientRect();
+  cv.width=rect.width>10?Math.round(rect.width):(par.offsetWidth||400);
+  cv.height=rect.height>10?Math.round(rect.height):200;
+  const ctx=cv.getContext('2d');ctx.fillStyle='#07090f';ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.fillStyle=color+'77';ctx.font='14px Inter,sans-serif';ctx.textAlign='center';
+  ctx.fillText('▶ Hit Simulate',cv.width/2,cv.height/2);
+}
+
+function drawKicker(ctx, x, groundY, phase, color){
+  // Simple stick figure kicker
+  const scale=1;
+  ctx.save();
+  ctx.strokeStyle='rgba(255,255,255,0.85)';
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  ctx.lineWidth=2.5;
+  ctx.lineCap='round';
+  const bx=x, by=groundY;
+  // Head
+  ctx.beginPath();ctx.arc(bx-8,by-38,5,0,Math.PI*2);ctx.fill();
+  // Body
+  ctx.beginPath();ctx.moveTo(bx-8,by-33);ctx.lineTo(bx-8,by-20);ctx.stroke();
+  if(phase<0.5){
+    // Wind-up: leg back
+    const legAngle=-0.3+phase*1.2;
+    // Standing leg
+    ctx.beginPath();ctx.moveTo(bx-8,by-20);ctx.lineTo(bx-4,by-10);ctx.lineTo(bx-4,by);ctx.stroke();
+    // Kicking leg (back)
+    ctx.beginPath();ctx.moveTo(bx-8,by-20);ctx.lineTo(bx-16,by-12);ctx.lineTo(bx-20,by-4);ctx.stroke();
+    // Arms
+    ctx.beginPath();ctx.moveTo(bx-8,by-30);ctx.lineTo(bx-18,by-24);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bx-8,by-30);ctx.lineTo(bx+2,by-22);ctx.stroke();
+  } else {
+    // Follow-through: leg forward
+    const t=(phase-0.5)*2;
+    const legFwd=t*1.4;
+    // Standing leg
+    ctx.beginPath();ctx.moveTo(bx-8,by-20);ctx.lineTo(bx-12,by-10);ctx.lineTo(bx-14,by);ctx.stroke();
+    // Kicking leg (forward and up)
+    ctx.beginPath();ctx.moveTo(bx-8,by-20);
+    ctx.lineTo(bx-4+t*14,by-10+t*(-8));
+    ctx.lineTo(bx+4+t*16,by-2+t*(-12));
+    ctx.stroke();
+    // Arms
+    ctx.beginPath();ctx.moveTo(bx-8,by-30);ctx.lineTo(bx-20,by-20);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bx-8,by-30);ctx.lineTo(bx+6,by-26);ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function launchConfetti(cv){
+  const particles=[];
+  const colors=['#00e096','#7c5fff','#f5a623','#4ab5ff','#f05454','#ffd060','#dd66ff'];
+  for(let i=0;i<80;i++){
+    particles.push({
+      x:Math.random()*cv.width,y:Math.random()*cv.height*0.4,
+      vx:(Math.random()-0.5)*6,vy:(Math.random()-3)*4,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      size:4+Math.random()*6,rot:Math.random()*360,rotV:(Math.random()-0.5)*12,life:1
+    });
+  }
+  const ctx=cv.getContext('2d');
+  let confId;
+  function confFrame(){
+    particles.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.rot+=p.rotV;p.life-=0.015;
+      ctx.save();ctx.globalAlpha=Math.max(0,p.life);
+      ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle=p.color;ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size/2);
+      ctx.restore();
+    });
+    if(particles.some(p=>p.life>0))confId=requestAnimationFrame(confFrame);
+  }
+  confId=requestAnimationFrame(confFrame);
+}
+
+function animProjectile(id,params,color,flashId,predictedR){
+  const cv=document.getElementById(id);if(!cv)return;
+  const par=cv.parentElement;
+  const rect=cv.getBoundingClientRect();
+  cv.width=rect.width>10?Math.round(rect.width):(par.offsetWidth||400);
+  cv.height=rect.height>10?Math.round(rect.height):200;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  if(simAnimIds[id])cancelAnimationFrame(simAnimIds[id]);
+
+  // Physics from params
+  const θ=(params.θ||45)*Math.PI/180,v0=params.v0||20,g=params.g||9.81,h0=params.h0||0;
+  const vx=v0*Math.cos(θ),vy=v0*Math.sin(θ);
+  const disc=vy*vy+2*g*h0;
+  const totalT=(vy+Math.sqrt(Math.max(0,disc)))/g;
+  const range=vx*totalT; // true physics landing distance
+
+  // goalR = where AI/formula says ball lands → goalpost sits here
+  // goalR = FIXED canonical target (45°, 20 m/s, Earth) — goalpost never moves
+  const CANONICAL_G=9.81,CANONICAL_V=20,CANONICAL_THETA=45*Math.PI/180;
+  const _cvy=CANONICAL_V*Math.sin(CANONICAL_THETA),_cvx=CANONICAL_V*Math.cos(CANONICAL_THETA);
+  const _cdisc=_cvy*_cvy; // h0=0 canonical
+  const _cT=(_cvy+Math.sqrt(_cdisc))/CANONICAL_G;
+  const goalR=_cvx*_cT; // ≈ 40.77 m, always fixed
+
+  const KICK_DUR=0.9;
+  const padL=50;  // left padding (kicker space)
+  const padR=55;  // right padding (post fits without clipping)
+  const groundY=H-20;
+
+  // Scale: fit the larger of range/goalR across usable width
+  const layoutR=Math.max(range,goalR)*1.05; // 5% headroom
+  const scaleX=(W-padL-padR)/Math.max(layoutR,1);
+  const maxH_traj=h0+(vy*vy)/(2*g);
+  const scaleY=(groundY-35)/Math.max(maxH_traj,1);
+  const scale=Math.min(scaleX,scaleY*0.80);
+
+  // Goalpost vars — consistent naming used everywhere below
+  const gpH_m=2.44; // metres high (FIFA)
+  const gpW_px=Math.max(28,Math.min(50,scale*3.5)); // visual width px
+  const gpLeft=padL+goalR*scale;           // left post x
+  const gpRight=gpLeft+gpW_px;             // right post x
+  const gpTop=groundY-gpH_m*scale;         // crossbar y
+
+  const t0=performance.now();
+  const trail=[];
+  let goalShown=false,confettiDone=false,kickSoundPlayed=false;
+
+  function drawScene(){
+    ctx.clearRect(0,0,W,H);
+    // Sky
+    const sky=ctx.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0,'#060d18');sky.addColorStop(0.6,'#081408');sky.addColorStop(1,'#0d2208');
+    ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+    // Ground
+    ctx.fillStyle='#163010';ctx.fillRect(0,groundY,W,H-groundY);
+    ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,groundY);ctx.lineTo(W,groundY);ctx.stroke();
+    // Pitch stripes
+    for(let x=0;x<W;x+=36){
+      ctx.fillStyle=x%72<36?'rgba(0,80,0,.3)':'rgba(0,55,0,.18)';
+      ctx.fillRect(x,groundY,36,H-groundY);
+    }
+    // Goalpost (U-shape: left post, crossbar, right post)
+    ctx.strokeStyle='rgba(255,255,255,.92)';ctx.lineWidth=3.5;ctx.lineCap='square';
+    ctx.beginPath();
+    ctx.moveTo(gpLeft,groundY);
+    ctx.lineTo(gpLeft,gpTop);
+    ctx.lineTo(gpRight,gpTop);
+    ctx.lineTo(gpRight,groundY);
+    ctx.stroke();
+    // Net
+    ctx.lineWidth=0.8;ctx.strokeStyle='rgba(255,255,255,.18)';
+    for(let ny=gpTop+8;ny<groundY;ny+=9){
+      ctx.beginPath();ctx.moveTo(gpLeft,ny);ctx.lineTo(gpRight,ny);ctx.stroke();
+    }
+    for(let nx=gpLeft;nx<=gpRight;nx+=9){
+      ctx.beginPath();ctx.moveTo(nx,gpTop);ctx.lineTo(nx,groundY);ctx.stroke();
+    }
+    // Faint ideal trajectory arc
+    ctx.strokeStyle='rgba(255,255,255,.05)';ctx.setLineDash([4,5]);ctx.lineWidth=1;
+    ctx.beginPath();
+    for(let i=0;i<=60;i++){
+      const t=(i/60)*totalT;
+      const bx=padL+vx*t*scale;
+      const by=groundY-((h0+vy*t-0.5*g*t*t)*scale);
+      i===0?ctx.moveTo(bx,by):ctx.lineTo(bx,by);
+    }
+    ctx.stroke();ctx.setLineDash([]);
+  }
+
+  function frame(now){
+    const elapsed=(now-t0)/1000;
+    const cycleDur=KICK_DUR+totalT+1.5;
+
+    drawScene();
+
+    if(elapsed>=cycleDur){
+      // Final resting state — ball at true physics landing
+      const bx=padL+range*scale,by=groundY-8;
+      ctx.fillStyle=color;ctx.beginPath();ctx.arc(bx,by,8,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1;ctx.stroke();
+      simAnimIds[id]=null;
+    } else if(elapsed<KICK_DUR){
+      // Kick wind-up
+      if(!kickSoundPlayed&&elapsed>KICK_DUR*0.8){kickSoundPlayed=true;playKick();}
+      drawKicker(ctx,padL-10,groundY,elapsed/KICK_DUR,color);
+      ctx.fillStyle=color;ctx.beginPath();ctx.arc(padL,groundY-8,8,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle='rgba(0,0,0,.5)';
+      for(let i=0;i<5;i++){const a=i*1.257;ctx.beginPath();ctx.arc(padL+5*Math.cos(a),(groundY-8)+5*Math.sin(a),1.8,0,Math.PI*2);ctx.fill();}
+      goalShown=false;
+      simAnimIds[id]=requestAnimationFrame(frame);
+    } else {
+      const bt=elapsed-KICK_DUR;
+      if(bt<=totalT){
+        const bx=padL+vx*bt*scale;
+        const by=groundY-((h0+vy*bt-0.5*g*bt*bt)*scale);
+        trail.push({x:bx,y:by,t:now});
+
+        // Fading kicker follow-through
+        const alpha=Math.max(0,1-(bt/totalT)*3);
+        if(alpha>0){ctx.globalAlpha=alpha*0.6;drawKicker(ctx,padL-10,groundY,1,color);ctx.globalAlpha=1;}
+
+        // Trail
+        const recent=trail.filter(pt=>now-pt.t<700);
+        recent.forEach((pt,ri)=>{
+          const a=(ri/recent.length)*0.4;
+          const rgb=color==='#00e096'?'0,224,150':'245,166,35';
+          ctx.fillStyle=`rgba(${rgb},${a})`;
+          ctx.beginPath();ctx.arc(pt.x,pt.y,3.5*(ri/recent.length),0,Math.PI*2);ctx.fill();
+        });
+
+        // Ball
+        const gr=ctx.createRadialGradient(bx-2,by-2,0,bx,by,10);
+        gr.addColorStop(0,'#ffffff');gr.addColorStop(0.45,'#d0ffe8');
+        gr.addColorStop(1,color==='#00e096'?'#005535':'#7a5200');
+        ctx.fillStyle=gr;ctx.beginPath();ctx.arc(bx,by,9,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=1;ctx.stroke();
+        const spin=elapsed*8;
+        ctx.fillStyle='rgba(0,0,0,.42)';
+        for(let i=0;i<5;i++){const a=spin+i*1.257;ctx.beginPath();ctx.arc(bx+5*Math.cos(a),by+5*Math.sin(a),1.8,0,Math.PI*2);ctx.fill();}
+
+        // Velocity arrow
+        const vang=Math.atan2(-(vy-g*bt),vx);
+        const arrLen=Math.min(36,Math.sqrt(vx*vx+(vy-g*bt)**2)*1.4);
+        ctx.strokeStyle=color+'cc';ctx.lineWidth=1.5;ctx.setLineDash([2,2]);
+        ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+Math.cos(vang)*arrLen,by+Math.sin(vang)*arrLen);
+        ctx.stroke();ctx.setLineDash([]);
+
+        // Goal check: ball lands within goalpost width (range ≈ goalR, post is fixed)
+        if(!goalShown&&bt>=totalT*0.98){
+          const landX=padL+range*scale;
+          if(landX>=gpLeft-4&&landX<=gpRight+4){
+            goalShown=true;playGoal();
+            const flashEl=document.getElementById(flashId);
+            if(flashEl){flashEl.classList.add('show');setTimeout(()=>flashEl.classList.remove('show'),2500);}
+            if(!confettiDone){confettiDone=true;launchConfetti(cv);}
+          }
+        }
+      } else {
+        // Resting
+        const bx=padL+range*scale,by=groundY-8;
+        ctx.fillStyle=color;ctx.beginPath();ctx.arc(bx,by,8,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=1;ctx.stroke();
+        confettiDone=false;
+      }
+      simAnimIds[id]=requestAnimationFrame(frame);
+    }
+
+    // Stats overlay
+    const h0disp=params.h0||0;
+    const hasAI=(predictedR!=null&&predictedR>0&&Math.abs(predictedR-range)>0.01);
+    const overlayH=hasAI?(h0disp>0?96:82):(h0disp>0?72:58);
+    ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(8,8,158,overlayH);
+    ctx.strokeStyle=color+'66';ctx.lineWidth=1;ctx.strokeRect(8,8,158,overlayH);
+    ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='7px Inter,sans-serif';ctx.textAlign='left';
+    ctx.fillText('ACTUAL RANGE',14,20);
+    ctx.fillStyle=color;ctx.font='bold 14px JetBrains Mono,monospace';ctx.fillText(range.toFixed(1)+' m',14,33);
+    if(hasAI){
+      ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='7px Inter,sans-serif';ctx.fillText('AI PREDICTED',14,44);
+      ctx.fillStyle='#f5a623';ctx.font='bold 12px JetBrains Mono,monospace';ctx.fillText(predictedR.toFixed(1)+' m',14,57);
+      ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='7px Inter,sans-serif';ctx.fillText('LAUNCH',14,68);
+      ctx.fillStyle=color;ctx.font='bold 11px JetBrains Mono,monospace';
+      ctx.fillText((params.θ||45)+'° · '+(params.v0||20)+' m/s · g='+((params.g||9.81).toFixed(1)),14,79);
+      if(h0disp>0){ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='7px Inter,sans-serif';ctx.fillText('HEIGHT',14,90);ctx.fillStyle=color;ctx.font='bold 10px JetBrains Mono,monospace';ctx.fillText('h₀='+h0disp.toFixed(1)+'m',50,90);}
+    } else {
+      ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='7px Inter,sans-serif';ctx.fillText('LAUNCH',14,44);
+      ctx.fillStyle=color;ctx.font='bold 11px JetBrains Mono,monospace';
+      ctx.fillText((params.θ||45)+'° · '+(params.v0||20)+' m/s · g='+((params.g||9.81).toFixed(1)),14,55);
+      if(h0disp>0){ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='7px Inter,sans-serif';ctx.fillText('HEIGHT',14,66);ctx.fillStyle=color;ctx.font='bold 10px JetBrains Mono,monospace';ctx.fillText('h₀='+h0disp.toFixed(1)+'m',50,66);}
+    }
+
+    ctx.textAlign='left';
+  }
+  requestAnimationFrame(frame);
+}
+
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// S10: NOTEBOOK
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function initBook(){
+  buildPages();bookPageIdx=0;
+  const fp=document.getElementById('bkFlip');
+  if(fp){fp.className='bk-flip';fp.style.display='none';}
+  renderBook();
+}
+function buildPages(){
+  const myPts=dataPoints.filter(d=>d.user).length;
+  const r2str=trainedModel?(trainedModel.r2*100).toFixed(1)+'%':'Not available';
+  const r2num=trainedModel?trainedModel.r2.toFixed(3):'N/A';
+  const model={linear:'Linear Regression',polynomial:'Polynomial Regression',neural:'Neural Network'}[selectedModel]||'Not trained';
+  const date=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  const fw=FEATURE_WEIGHTS.length?FEATURE_WEIGHTS.map(w=>(w*100).toFixed(0)):PARAMS.map(()=>'—');
+  bookPages=[
+  {l:`<h3>Lab Notebook</h3>
+<span class="bk-lbl">Experiment</span><span class="bk-val">Projectile Motion</span>
+<span class="bk-lbl">Date</span><span class="bk-val">${date}</span>
+<span class="bk-lbl">AI Model Used</span><span class="bk-val">${model}</span>
+<span class="bk-lbl">AI Accuracy (R²)</span><span class="bk-val" style="color:#1a5faa;font-weight:700">${r2str}</span>
+<p style="margin-top:6px;font-size:.7rem;color:#5a6a8c">R² = 1.0 means a perfect fit. Values above 0.95 are excellent.</p>
+<span class="bk-pg-num">Page 1 of 5</span>`,
+   r:`<h3>Projectile Motion</h3>
+<p>A <strong>projectile</strong> is any object launched into the air under gravity alone (after launch). Its horizontal motion is constant while vertical motion accelerates downward.</p>
+<p>The result is always a <strong>parabolic path</strong> — a mathematical curve that was proven by Galileo in 1638.</p>
+<span class="bk-lbl">First correct analysis</span><span class="bk-val">Galileo Galilei, 1638</span>
+<span class="bk-lbl">Key insight</span><span class="bk-val">Horizontal and vertical motions are independent</span>
+<span class="bk-lbl">Used in</span><span class="bk-val">Sports science, ballistics, space launches, engineering</span>
+<span class="bk-pg-num">Page 1 of 5</span>`},
+  {l:`<h3>AI Formula Found</h3>
+<p>After training on <strong>${dataPoints.length} measurements</strong>, the AI identified:</p>
+<span class="bk-val" style="font-size:.76rem;color:#0d3d7a;font-weight:700">R ≈ v₀²·sin(2θ) / g · (1 + corrections)</span>
+<p style="margin-top:5px">The main part, <strong>v₀²·sin(2θ)/g</strong>, is exactly the textbook formula. The AI also found correction terms for air drag and launch height — physics effects the simple formula ignores.</p>
+<span class="bk-lbl">Model accuracy</span><span class="bk-val" style="color:#1a5faa">R² = ${r2num}</span>
+<span class="bk-pg-num">Page 2 of 5</span>`,
+   r:`<h3>Textbook Formulas</h3>
+<p>For a projectile launched at angle θ with speed v₀:</p>
+<span class="bk-val" style="font-size:.92rem;color:#8c5a00;font-weight:700">R = v₀²·sin(2θ) / g</span>
+<span class="bk-val" style="font-size:.82rem;color:#8c5a00">H = v₀²·sin²(θ) / 2g</span>
+<span class="bk-lbl">R</span><span class="bk-val">Horizontal range (metres)</span>
+<span class="bk-lbl">H</span><span class="bk-val">Maximum height (metres)</span>
+<span class="bk-lbl">θ</span><span class="bk-val">Launch angle (degrees)</span>
+<span class="bk-lbl">v₀</span><span class="bk-val">Initial speed (m/s)</span>
+<span class="bk-lbl">g</span><span class="bk-val">Gravity = 9.81 m/s² on Earth</span>
+<span class="bk-pg-num">Page 2 of 5</span>`},
+  {l:`<h3>Data Summary</h3>
+<span class="bk-lbl">Total measurements</span><span class="bk-val">${dataPoints.length}</span>
+<span class="bk-lbl">Added by me</span><span class="bk-val">${myPts} measurement${myPts!==1?'s':''}</span>
+<span class="bk-lbl">Auto-generated</span><span class="bk-val">${dataPoints.length-myPts}</span>
+<span class="bk-lbl">Training accuracy (R²)</span><span class="bk-val" style="color:#1a5faa;font-weight:700">${r2str}</span>
+<p style="font-size:.7rem;color:#5a6a8c;margin-top:5px">Varying angle and speed widely helps the AI learn the full sin(2θ) relationship.</p>
+<span class="bk-pg-num">Page 3 of 5</span>`,
+   r:`<h3>Textbook Assumptions</h3>
+<p>R = v₀²·sin(2θ)/g is exact only when:</p>
+<span class="bk-lbl">1 — No air resistance</span><span class="bk-val">Projectile moves through a perfect vacuum</span>
+<span class="bk-lbl">2 — Flat ground</span><span class="bk-val">Launch and landing heights are equal</span>
+<span class="bk-lbl">3 — Point mass</span><span class="bk-val">Ball has no spin, no Magnus effect</span>
+<span class="bk-lbl">4 — No wind</span><span class="bk-val">Still air throughout the flight</span>
+<p style="margin-top:5px;font-size:.7rem;color:#5a6a8c">In a real sport, all of these are violated. The AI naturally handles real-world deviations.</p>
+<span class="bk-pg-num">Page 3 of 5</span>`},
+  {l:`<h3>AI Discoveries</h3>
+<p>Feature importance — how much each factor affects range:</p>
+<span class="bk-lbl">📐 Launch Angle — ${fw[0]}% influence</span><span class="bk-val" style="color:#1a5faa">Controls sin(2θ) — 45° is the peak.</span>
+<span class="bk-lbl">🚀 Initial Speed — ${fw[1]}% influence</span><span class="bk-val" style="color:#1a5faa">Speed squared — doubling v₀ quadruples range.</span>
+<span class="bk-lbl">🌍 Gravity — ${fw[2]}% influence</span><span class="bk-val" style="color:#1a5faa">Inverse relation — Moon gives 6× range.</span>
+<span class="bk-lbl">⬆ Launch Height — ${fw[3]}% influence</span><span class="bk-val" style="color:#1a5faa">Extra height gives extra time in the air.</span>
+<span class="bk-pg-num">Page 4 of 5</span>`,
+   r:`<h3>Historical Timeline</h3>
+<p><strong>~330 BC</strong> — Aristotle wrongly believed objects needed constant force to keep moving. This blocked progress for nearly 2000 years.</p>
+<p><strong>1638</strong> — Galileo proved the path is a parabola and showed horizontal and vertical motions are independent — the foundation of modern kinematics.</p>
+<p><strong>1687</strong> — Newton's laws gave the exact mathematical framework. F=ma explained every cannon shell, arrow, and cricket ball.</p>
+<p><strong>Today</strong> — AI can rediscover these laws from raw data in seconds — and even finds real-world corrections automatically.</p>
+<span class="bk-pg-num">Page 4 of 5</span>`},
+  {l:`<h3>AI Conclusion</h3>
+<p>The AI independently found that <strong>v₀²·sin(2θ)/g</strong> governs projectile range — a result that took centuries of human effort to establish.</p>
+<p>It also detected the real-world corrections: air drag, launch height, and wind — effects the simple textbook formula ignores.</p>
+<span class="bk-lbl">Key result</span><span class="bk-val">AI and textbook agree on the core formula</span>
+<span class="bk-lbl">AI advantage</span><span class="bk-val">Handles real-world complexity automatically</span>
+<span class="bk-lbl">Accuracy</span><span class="bk-val" style="color:#1a5faa;font-weight:700">${r2str}</span>
+<span class="bk-pg-num">Page 5 of 5</span>`,
+   r:`<h3>Why This Formula Matters</h3>
+<p>R = v₀²·sin(2θ)/g reveals a beautiful symmetry: a launch at angle θ has the same range as one at 90°−θ. So 30° and 60° give identical ranges — only the flight path differs.</p>
+<p>Maximum range always occurs at 45° — the geometric sweet spot between height and horizontal speed.</p>
+<p><strong>Applications:</strong> sports science (optimal free-kick angles), artillery and ballistics, spacecraft re-entry trajectories, javelin and shot-put biomechanics.</p>
+<span class="bk-pg-num">Page 5 of 5</span>`}
+  ];
+}
+function renderBook(){
+  if(!bookPages.length||bookPageIdx<0)return;
+  const pg=bookPages[bookPageIdx];if(!pg)return;
+  const bkL=document.getElementById('bkL');const bkR=document.getElementById('bkR');
+  if(bkL){bkL.innerHTML=pg.l||'';void bkL.offsetHeight;}
+  if(bkR){bkR.innerHTML=pg.r||'';void bkR.offsetHeight;}
+  document.getElementById('bkPgCt').textContent=`Page ${bookPageIdx+1} of ${bookPages.length}`;
+  document.getElementById('prevPgBtn').disabled=bookPageIdx===0;
+  document.getElementById('nextPgBtn').disabled=bookPageIdx>=bookPages.length-1;
+}
+function prevPage(){if(bookPageIdx<=0||bookPages.length===0)return;animatePageTurn('prev',bookPageIdx-1);}
+function nextPage(){if(bookPageIdx>=bookPages.length-1)return;animatePageTurn('next',bookPageIdx+1);}
+let _bookFlipping=false;
+function animatePageTurn(dir,nextIdx){
+  if(_bookFlipping)return;
+  _bookFlipping=true;
+  playPageTurn();
+  const fp=document.getElementById('bkFlip');
+  const ffC=document.getElementById('bkFFContent');
+  const fbC=document.getElementById('bkFBContent');
+  if(dir==='next'){
+    ffC.innerHTML=bookPages[bookPageIdx]?.r||'';
+    fbC.innerHTML=bookPages[nextIdx]?.l||'';
+  } else {
+    ffC.innerHTML=bookPages[bookPageIdx]?.l||'';
+    fbC.innerHTML=bookPages[nextIdx]?.r||'';
+  }
+  fp.style.display='block';
+  fp.className='bk-flip '+(dir==='next'?'anim':'anim-rev');
+  bookPageIdx=nextIdx;
+  renderBook();
+  setTimeout(()=>{fp.className='bk-flip';fp.style.display='none';_bookFlipping=false;},450);
+}
+// Drag-to-turn support
+(function(){
+  let dragStartX=0,dragDelta=0,dragging=false;
+  const getWrap=()=>document.getElementById('bookWrap');
+  function onDown(e){if(_bookFlipping)return;dragging=true;dragStartX=e.touches?e.touches[0].clientX:e.clientX;dragDelta=0;}
+  function onMove(e){if(!dragging)return;dragDelta=(e.touches?e.touches[0].clientX:e.clientX)-dragStartX;e.preventDefault();}
+  function onUp(){if(!dragging)return;dragging=false;if(dragDelta<-60)nextPage();else if(dragDelta>60)prevPage();dragDelta=0;}
+  document.addEventListener('mousedown',e=>{if(getWrap()&&getWrap().contains(e.target))onDown(e);});
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+  document.addEventListener('touchstart',e=>{if(getWrap()&&getWrap().contains(e.target))onDown(e);},{passive:true});
+  document.addEventListener('touchmove',e=>{if(dragging)onMove(e);},{passive:false});
+  document.addEventListener('touchend',onUp);
+})();
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// QUIZ
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const QQS=[
+  {q:'A ball is launched at 45°. If you increase the launch angle to 60°, what happens to the range on flat ground?',opts:['It increases','It decreases','It stays the same','It doubles'],ans:1,e:'45° gives maximum range. Any angle above or below 45° gives less range. 60° and 30° give the same range, which is less than at 45°.'},
+  {q:'Which formula gives the horizontal range of a projectile on flat ground?',opts:['R = v₀·t','R = v₀²·sin(2θ)/g','R = ½gt²','R = v₀·cos(θ)·g'],ans:1,e:'R = v₀²·sin(2θ)/g is the standard textbook formula for range. It combines initial speed, angle, and gravity.'},
+  {q:'A football is kicked on the Moon (g = 1.62 m/s²) vs Earth (g = 9.81 m/s²) with the same angle and speed. How does the range compare?',opts:['Same on both','About 6× farther on Moon','About 6× farther on Earth','Twice as far on Moon'],ans:1,e:'R is inversely proportional to g. Since Earth g is 9.81/1.62 ≈ 6 times the Moon, the ball travels roughly 6 times farther on the Moon.'},
+  {q:'Galileo\'s key insight about projectile motion was:',opts:['Gravity is constant everywhere','Horizontal and vertical motions are independent','Heavier objects fall faster','Air resistance is negligible'],ans:1,e:'Galileo showed that horizontal velocity stays constant (no force acts horizontally) while vertical motion accelerates downward — these two are completely independent.'},
+  {q:'If you double the initial speed v₀ while keeping angle and gravity constant, the range will:',opts:['Double','Triple','Quadruple','Halve'],ans:2,e:'Since R = v₀²·sin(2θ)/g, range is proportional to v₀². Doubling v₀ gives (2v₀)² = 4v₀² — so range quadruples.'},
+];
+let duoIdx=0,duoLives=3,duoScore=0,duoAnswered=false;
+function openQuizModal(){duoIdx=0;duoLives=3;duoScore=0;duoAnswered=false;document.getElementById('quizModal').classList.remove('hidden');renderQ();}
+function closeQuizModal(){document.getElementById('quizModal').classList.add('hidden');}
+function renderQ(){
+  if(duoIdx>=QQS.length){showRes();return;}
+  const q=QQS[duoIdx];duoAnswered=false;
+  document.getElementById('quizPB').style.width=((duoIdx/QQS.length)*100)+'%';
+  document.getElementById('quizScore').textContent=`Score: ${duoScore}/${QQS.length}`;
+  document.getElementById('quizNextBtn').style.display='none';
+  document.getElementById('duoLives').innerHTML=Array.from({length:3},(_,i)=>`<span class="duo-life${i>=duoLives?' lost':''}">❤️</span>`).join('');
+  const body=document.getElementById('quizBody');
+  body.innerHTML=`<div class="duo-q">Q${duoIdx+1}. ${q.q}</div><div class="duo-opts">${q.opts.map((o,i)=>`<div class="duo-opt" data-i="${i}" onclick="duoSelect(${i})"><span class="duo-lt">${'ABCD'[i]}</span>${o}</div>`).join('')}</div>`;
+}
+function duoSelect(i){
+  if(duoAnswered)return;duoAnswered=true;
+  const q=QQS[duoIdx],cor=i===q.ans;
+  if(cor)duoScore++;else duoLives--;
+  document.querySelectorAll('.duo-opt').forEach((el,j)=>{el.classList.add('locked');if(j===q.ans)el.classList.add('cor');else if(j===i&&!cor)el.classList.add('wrg');});
+  const fb=document.createElement('div');fb.className='duo-fb '+(cor?'cor-fb':'wrg-fb');
+  fb.innerHTML=`<span>${cor?'✅':'❌'}</span><div class="duo-fb-t"><strong>${cor?'Correct!':'Not quite.'}</strong> ${q.e}</div>`;
+  document.getElementById('quizBody').appendChild(fb);
+  if(cor)playTone(659,.2,'sine',.05);else playTone(200,.2,'sawtooth',.04);
+  document.getElementById('duoLives').innerHTML=Array.from({length:3},(_,j)=>`<span class="duo-life${j>=duoLives?' lost':''}">❤️</span>`).join('');
+  document.getElementById('quizScore').textContent=`Score: ${duoScore}/${QQS.length}`;
+  document.getElementById('quizNextBtn').style.display='';
+  document.getElementById('quizNextBtn').onclick=duoLives<=0&&!cor?showRes:duoNext;
+}
+function duoNext(){if(duoIdx<QQS.length-1){duoIdx++;renderQ();}else showRes();}
+function getRank(p){return p>=90?'Physics Ace':p>=70?'Lab Scientist':p>=50?'Curious Explorer':'Keep Exploring';}
+function showRes(){
+  document.getElementById('quizPB').style.width='100%';
+  const pct=Math.round(duoScore/QQS.length*100),rank=getRank(pct);
+  const emoji=pct>=90?'🏆':pct>=70?'🥇':pct>=50?'🥈':'📚';
+  const body=document.getElementById('quizBody');body.innerHTML='';
+  const w=document.createElement('div');w.className='duo-res fade';
+  w.innerHTML=`<div class="duo-re">${emoji}</div><div class="duo-rs">${duoScore}/${QQS.length}</div><div class="duo-rr">${rank}</div><div class="duo-rm">${pct>=90?'You basically ARE the textbook now!':pct>=70?'Solid work, researcher!':pct>=50?'Great start — the lab is proud!':'Every expert was a beginner once!'}</div><div class="duo-xb"><div class="duo-xf" id="xf" style="width:0%"></div></div>`;
+  body.appendChild(w);setTimeout(()=>{const f=document.getElementById('xf');if(f)f.style.width=pct+'%';},100);
+  document.getElementById('quizScore').textContent=`${pct}% correct`;
+  const nb=document.getElementById('quizNextBtn');nb.style.display='';nb.textContent='Claim Badge 🏅';nb.onclick=()=>{closeQuizModal();setTimeout(()=>showBadge(),200);};
+  document.getElementById('badgeCTA').style.display='';
+  document.getElementById('quizPreview').style.display='block';
+  document.getElementById('quizPreview').textContent=`${pct}% · ${rank}`;
+  playBadge();
+}
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// S11 DESCRIPTIVE ANALYSIS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// REMOVE these two lines:
+// const GEMINI_KEY = '1111111';
+// const GEMINI_URL = `https://...?key=${GEMINI_KEY}`;
+
+// Replace your Gemini fetch with:
+async function callAI(prompt) {
+  const res = await fetch('/api/ask-ai', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt })
+  });
+  const data = await res.json();
+  return data.text;
+}
+let daReport = null; // will hold full report for download
+
+async function submitDescriptive() {
+  const a1 = document.getElementById('da-ans1').value.trim();
+  const a2 = document.getElementById('da-ans2').value.trim();
+  if (!a1 || !a2) {
+    alert('Please answer both questions before submitting!');
+    return;
+  }
+  document.getElementById('da-submit-btn').disabled = true;
+  document.getElementById('da-loading').style.display = 'block';
+  document.getElementById('da-mascot-wrap').style.display = 'none';
+
+  const prompt = `
+You are an encouraging science teacher evaluating a student's understanding of projectile motion after a hands-on experiment.
+
+Student answered two questions:
+
+Q1: "In the experiment, what happened to the ball's horizontal speed as it flew through the air? Why do you think that happened?"
+Student's Answer: "${a1}"
+
+Q2: "If you kicked the ball at a steeper angle, what would change — the range, the height, or both? Explain using what you observed."
+Student's Answer: "${a2}"
+
+Your task:
+1. Give a SHORT mascot feedback (2-3 sentences, warm and encouraging, mention one thing they got right and one to improve). Start with an emoji reaction.
+2. Give a FULL detailed report with:
+   - Understanding Level (Novice / Developing / Proficient / Advanced)
+   - Score out of 10 for conceptual understanding
+   - Analysis of Q1 answer (strengths + gaps)
+   - Analysis of Q2 answer (strengths + gaps)
+   - Key physics concepts they demonstrated
+   - What to study next
+   - Overall encouragement
+
+Respond ONLY as valid JSON in this exact format:
+{
+  "mascot_emoji": "🎉",
+  "mascot_feedback": "Short 2-3 sentence feedback here...",
+  "level": "Developing",
+  "score": 7,
+  "q1_analysis": "...",
+  "q2_analysis": "...",
+  "concepts_shown": ["horizontal velocity", "gravity"],
+  "study_next": "...",
+  "encouragement": "..."
+}`;
+
+  try {
+    const res = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
+      })
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(`API ${res.status}: ${errData?.error?.message || res.statusText}`);
+    }
+    const data = await res.json();
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    daReport = parsed;
+    daReport.studentName = scientistName;
+    daReport.date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    daReport.q1_text = a1;
+    daReport.q2_text = a2;
+
+    document.getElementById('da-loading').style.display = 'none';
+    document.getElementById('da-mascot-face').textContent = parsed.mascot_emoji || '🤖';
+    document.getElementById('da-mascot-text').textContent = parsed.mascot_feedback;
+    document.getElementById('da-mascot-wrap').style.display = 'block';
+    setTimeout(() => {
+      document.getElementById('da-download-wrap').style.display = 'block';
+    }, 1800);
+
+  } catch (e) {
+    document.getElementById('da-loading').style.display = 'none';
+    document.getElementById('da-mascot-face').textContent = '😅';
+    const errMsg = e?.message || String(e);
+    document.getElementById('da-mascot-text').textContent = 'Error: ' + errMsg + ' — Check your API key is valid and not expired.';
+    document.getElementById('da-mascot-wrap').style.display = 'block';
+    document.getElementById('da-submit-btn').disabled = false;
+    console.error('Gemini error:', e);
+  }
+}
+
+function viewDAReport() {
+  if (!daReport) return;
+  const r = daReport;
+  document.getElementById('rpt-student').textContent = r.studentName;
+  document.getElementById('rpt-date').textContent = r.date;
+  document.getElementById('rpt-score').innerHTML = `${r.score}<span style="font-size:1rem;color:var(--text2)">/10</span>`;
+  document.getElementById('rpt-level').textContent = r.level;
+  document.getElementById('rpt-q1-ans').textContent = `"${r.q1_text}"`;
+  document.getElementById('rpt-q1-body').textContent = r.q1_analysis;
+  document.getElementById('rpt-q2-ans').textContent = `"${r.q2_text}"`;
+  document.getElementById('rpt-q2-body').textContent = r.q2_analysis;
+  document.getElementById('rpt-concepts').innerHTML = (r.concepts_shown||[]).map(c=>`<span class="rpt-chip">${c}</span>`).join('');
+  document.getElementById('rpt-study').textContent = r.study_next;
+  document.getElementById('rpt-enc-body').textContent = r.encouragement;
+  document.getElementById('reportModal').classList.remove('hidden');
+  document.getElementById('reportModal').scrollTop = 0;
+}
+
+function closeReport() {
+  document.getElementById('reportModal').classList.add('hidden');
+}
+
+function downloadDAReport() {
+  if (!daReport) return;
+  const r = daReport;
+  const printHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DiscoveryLab — Analysis Report</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,sans-serif;background:#07090f;color:#dce8f6;padding:32px 24px;line-height:1.6;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .container{max-width:660px;margin:0 auto}
+  .hdr{margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.1)}
+  h1{color:#00e096;font-size:1.25rem;font-weight:800;margin-bottom:4px}
+  .sub{color:#7a8fa8;font-size:.78rem}
+  .card{background:#0e1219;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;margin-bottom:14px;page-break-inside:avoid}
+  .lbl{font-size:.6rem;font-weight:700;color:#00e096;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+  .score{font-size:2.5rem;font-weight:900;color:#f5a623;font-family:monospace;line-height:1}
+  .score span{font-size:1rem;color:#7a8fa8}
+  .lvl{display:inline-block;background:#7c5fff;color:#fff;border-radius:20px;padding:4px 14px;font-size:.75rem;font-weight:700;margin-top:6px}
+  .ans{background:#141b26;border-radius:8px;padding:10px 13px;font-size:.77rem;color:#7a8fa8;font-style:italic;border-left:3px solid rgba(0,224,150,.3);margin-top:8px}
+  .body{font-size:.82rem;margin-top:10px;line-height:1.7}
+  .chip{display:inline-block;background:#141b26;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:2px 10px;font-size:.68rem;margin:3px 2px;color:#4ab5ff}
+  .enc{border-color:rgba(0,224,150,.2)}
+  .enc .lbl{color:#36f0a0}
+  .foot{text-align:center;margin-top:24px;font-size:.65rem;color:#48576e}
+  @media print{body{background:#fff;color:#111}.card{background:#f9f9f9;border-color:#ddd}h1,.lbl{color:#006644}.score{color:#b07700}.lvl{background:#4a35aa}.ans{background:#f0f0f0;border-left-color:#006644}.chip{background:#eef;border-color:#99b;color:#335}.enc{border-color:#006644}.enc .lbl{color:#004433}.foot{color:#999}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="hdr"><h1>⚽ Projectile Motion — Analysis Report</h1><div class="sub">Student: ${r.studentName} &nbsp;·&nbsp; ${r.date}</div></div>
+  <div class="card" style="display:flex;gap:28px;align-items:flex-start">
+    <div><div class="lbl">Score</div><div class="score">${r.score}<span>/10</span></div></div>
+    <div style="margin-top:4px"><div class="lbl">Level</div><div class="lvl">${r.level}</div></div>
+  </div>
+  <div class="card"><div class="lbl">Q1 — Horizontal Speed</div><div class="ans">"${r.q1_text}"</div><p class="body">${r.q1_analysis}</p></div>
+  <div class="card"><div class="lbl">Q2 — Angle &amp; Range</div><div class="ans">"${r.q2_text}"</div><p class="body">${r.q2_analysis}</p></div>
+  <div class="card"><div class="lbl">Concepts Demonstrated</div><div style="margin-top:6px">${(r.concepts_shown||[]).map(c=>`<span class="chip">${c}</span>`).join('')}</div></div>
+  <div class="card"><div class="lbl">What to Study Next</div><p class="body">${r.study_next}</p></div>
+  <div class="card enc"><div class="lbl">Encouragement</div><p class="body">${r.encouragement}</p></div>
+  <div class="foot">Generated by DiscoveryLab · Powered by Gemini AI</div>
+</div>
+<script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script>
+</body></html>`;
+  const w = window.open('', '_blank', 'width=750,height=900');
+  if (w) { w.document.write(printHTML); w.document.close(); }
+}
+
+// Speech recognition
+let speechRecog = null;
+function startSpeech(qNum) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) { alert('Speech not supported in this browser. Try Chrome!'); return; }
+  if (speechRecog) { speechRecog.stop(); return; }
+  speechRecog = new SpeechRecognition();
+  speechRecog.lang = 'en-IN';
+  speechRecog.interimResults = true;
+  const mic = document.getElementById(`da-mic${qNum}`);
+  const status = document.getElementById(`da-mic-status${qNum}`);
+  const ta = document.getElementById(`da-ans${qNum}`);
+  mic.classList.add('listening');
+  status.textContent = '🔴 Listening... tap mic to stop';
+  speechRecog.onresult = (e) => {
+    const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+    ta.value = transcript;
+  };
+  speechRecog.onend = () => {
+    mic.classList.remove('listening');
+    status.textContent = '✅ Speech captured';
+    speechRecog = null;
+    setTimeout(() => status.textContent = '', 2500);
+  };
+  speechRecog.onerror = () => {
+    mic.classList.remove('listening');
+    status.textContent = '❌ Error. Try again.';
+    speechRecog = null;
+  };
+  speechRecog.start();
+}
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// BADGE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function showBadge(){
+  document.getElementById('badgeModal').classList.remove('hidden');
+  const date=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  const pct=Math.round((duoScore/QQS.length)*100);
+  const rank=getRank(pct);
+  const model={linear:'Linear Regression',polynomial:'Polynomial Regression',neural:'Neural Network'}[selectedModel]||'—';
+  const r2=trainedModel?(trainedModel.r2*100).toFixed(1)+'%':'—';
+  const myPts=dataPoints.filter(d=>d.user).length;
+  const bc=document.getElementById('badgeCard');
+  bc.innerHTML=`
+    <div class="bc-corner">DISCOVERYLAB · PHYSICS</div>
+    <div class="bc-ribbon">🥉 VERIFIED ACHIEVEMENT</div>
+    <div class="bc-name-row">
+      <div class="bc-icon">⚛</div>
+      <div>
+        <div class="bc-sname">${scientistName||'Scientist'}</div>
+        <div class="bc-ssub">FOOTBALL TRAJECTORY · COMPLETE</div>
+      </div>
+    </div>
+    <div class="bc-rank">
+      <div class="bc-rl">TITLE EARNED</div>
+      <div class="bc-rv">${rank}</div>
+    </div>
+    <div class="bc-stats">
+      <div class="bc-sc">
+        <div class="bc-sl">QUIZ SCORE</div>
+        <div class="bc-sv">${duoScore}/${QQS.length}</div>
+        <div class="bc-ss">${pct}% correct</div>
+      </div>
+      <div class="bc-sc">
+        <div class="bc-sl">AI MODEL</div>
+        <div class="bc-sv" style="font-size:.72rem;line-height:1.2">${model}</div>
+        <div class="bc-ss">R² = ${r2}</div>
+      </div>
+      <div class="bc-sc">
+        <div class="bc-sl">DATA POINTS</div>
+        <div class="bc-sv">${dataPoints.length}</div>
+        <div class="bc-ss">${myPts} by you</div>
+      </div>
+      <div class="bc-sc">
+        <div class="bc-sl">STAGES DONE</div>
+        <div class="bc-sv">10/10</div>
+        <div class="bc-ss">All complete</div>
+      </div>
+    </div>
+    <div class="bc-foot">
+      <div class="bc-date">${date}</div>
+      <div class="bc-logo">DISCOVERYLAB</div>
+    </div>`;
+  bc.classList.add('pop');
+  setTimeout(()=>bc.classList.remove('pop'),600);
+  saveBadgeToStore();
+  playBadge();
+}
+function closeBadge(){document.getElementById('badgeModal').classList.add('hidden');}
+
+function downloadBadge(){
+  const cv=document.getElementById('badgeCanvas');const ctx=cv.getContext('2d');
+  ctx.fillStyle='#07090f';ctx.fillRect(0,0,440,360);
+  ctx.fillStyle='#00e096';ctx.font='bold 22px Inter,sans-serif';ctx.textAlign='center';ctx.fillText('⚽ Projectile Physics Master',220,60);
+  ctx.fillStyle='#dce8f6';ctx.font='16px Inter,sans-serif';ctx.fillText('DiscoveryLab Certificate',220,100);
+  ctx.fillStyle='#f5a623';ctx.font='14px JetBrains Mono,monospace';
+  const date=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  ctx.fillText(date,220,300);
+  const url=cv.toDataURL('image/png');const a=document.createElement('a');a.href=url;a.download='projectile-badge.png';a.click();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// INIT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let scientistName='Scientist';
+(function(){
+  const urlN=new URLSearchParams(window.location.search).get('name');
+  const ssN=sessionStorage.getItem('dlName');
+  if(urlN)scientistName=decodeURIComponent(urlN);
+  else if(ssN)scientistName=ssN;
+  sessionStorage.setItem('dlName',scientistName);
+  const el=document.getElementById('tbName');
+  if(el)el.textContent=scientistName;
+})();
+
+function saveBadgeToStore(){
+  const pct=Math.round(duoScore/QQS.length*100),rank=getRank(pct);
+  const model={linear:'Linear Regression',polynomial:'Polynomial Regression',neural:'Neural Network'}[selectedModel]||'—';
+  const r2=trainedModel?(trainedModel.r2*100).toFixed(1)+'%':'—';
+  const key='dlbadges_'+scientistName.toLowerCase().replace(/\s+/g,'_');
+  let badges=[];
+  try{badges=JSON.parse(localStorage.getItem(key)||'[]');}catch(e){}
+  const badgeName='Football Trajectory';
+  if(!badges.find(b=>b.name===badgeName&&b.subject==='physics')){
+    badges.push({
+      name:badgeName,icon:'⚽',subject:'physics',
+      desc:rank+' · '+pct+'% quiz · R²='+r2,
+      earned:new Date().toISOString()
+    });
+    localStorage.setItem(key,JSON.stringify(badges));
+  }
+}
+
+buildPills();
+buildHistoryCards();
+initScene();
+</script>
+</body>
+</html>
