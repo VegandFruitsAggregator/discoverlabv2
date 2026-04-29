@@ -7,6 +7,10 @@ export default async function handler(req, res) {
   if (!prompt) return res.status(400).json({ error: 'No prompt' });
 
   const GEMINI_KEY = process.env.GEMINI_KEY;
+  if (!GEMINI_KEY) {
+    return res.status(500).json({ error: 'GEMINI_KEY env var is not set in Vercel' });
+  }
+
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`;
 
   const upstream = await fetch(url, {
@@ -19,6 +23,16 @@ export default async function handler(req, res) {
   });
 
   const data = await upstream.json();
+
+  // If Gemini returned an error, forward it clearly
+  if (data.error) {
+    return res.status(500).json({ error: `Gemini error: ${data.error.message}` });
+  }
+
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  if (!text) {
+    return res.status(500).json({ error: 'Gemini returned empty response', raw: data });
+  }
+
   res.status(200).json({ text });
 }
