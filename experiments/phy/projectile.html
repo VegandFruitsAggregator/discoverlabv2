@@ -2607,14 +2607,14 @@ function showRes(){
 // REMOVE these two lines:
 // const GEMINI_KEY = '1111111';
 // const GEMINI_URL = `https://...?key=${GEMINI_KEY}`;
-
+const GEMINI_URL = `/api/ask-ai`;
 // Replace your Gemini fetch with:
 async function callAI(prompt) {
-  const res = await fetch('/api/ask-ai', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt })
-  });
+  const res = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
   const data = await res.json();
   return data.text;
 }
