@@ -1,38 +1,37 @@
-export const config = { api: { bodyParser: true } };
-
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
   const { prompt } = req.body;
-  if (!prompt) return res.status(400).json({ error: 'No prompt' });
+  if (!prompt) return res.status(400).json({ error: 'No prompt provided' });
 
-  const GEMINI_KEY = process.env.GEMINI_KEY;
-  if (!GEMINI_KEY) {
-    return res.status(500).json({ error: 'GEMINI_KEY env var is not set in Vercel' });
-  }
+  const HF_TOKEN = process.env.HF_TOKEN;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`;
+  const response = await fetch(
+    'https://api-inference.huggingface.co/models/microsoft/Phi-4-mini-instruct/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${HF_TOKEN}`
+      },
+      body: JSON.stringify({
+        model: 'microsoft/Phi-4-mini-instruct',
+        messages: [
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 1000,
+        temperature: 0.7
+      })
+    }
+  );
 
-  const upstream = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
-    })
-  });
+  const data = await response.json();
 
-  const data = await upstream.json();
+  // Chat completions format — same as OpenAI
+  const raw = data?.choices?.[0]?.message?.content || '';
+  const clean = raw.replace(/```json|```/g, '').trim();
 
-  // If Gemini returned an error, forward it clearly
-  if (data.error) {
-    return res.status(500).json({ error: `Gemini error: ${data.error.message}` });
-  }
-
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  if (!text) {
-    return res.status(500).json({ error: 'Gemini returned empty response', raw: data });
-  }
-
-  res.status(200).json({ text });
+  res.status(200).json({ text: clean });
 }
