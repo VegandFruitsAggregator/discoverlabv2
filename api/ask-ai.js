@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   const HF_TOKEN = process.env.HF_TOKEN;
 
   const response = await fetch(
-    'https://api-inference.huggingface.co/models/microsoft/Phi-4-mini-instruct/v1/chat/completions',
+    'https://router.huggingface.co/v1/chat/completions',
     {
       method: 'POST',
       headers: {
@@ -18,9 +18,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'microsoft/Phi-4-mini-instruct',
-        messages: [
-          { role: 'user', content: prompt }
-        ],
+        messages: [{ role: 'user', content: prompt }],
         max_tokens: 1000,
         temperature: 0.7
       })
@@ -29,7 +27,11 @@ export default async function handler(req, res) {
 
   const data = await response.json();
 
-  // Chat completions format — same as OpenAI
+  // Catch API-level errors and return them cleanly
+  if (!response.ok) {
+    return res.status(500).json({ text: 'AI error: ' + (data?.error?.message || response.statusText) });
+  }
+
   const raw = data?.choices?.[0]?.message?.content || '';
   const clean = raw.replace(/```json|```/g, '').trim();
 
